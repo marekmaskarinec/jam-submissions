@@ -1,0 +1,97 @@
+
+import (
+	"tophat/std/std.um"
+	"tophat/audio.um"
+
+	"global.um"
+
+	"player.um"
+	"hud.um"
+	"projectile.um"
+	"enemy.um"
+)
+
+// planned influences:
+// wipe village                                     - 2 %
+// teleport to random location                      - 1 %
+
+type inf = struct {
+	end: int
+	endfunc: fn()
+}
+
+type infc = struct {
+	s: int
+	b: int
+	l: int
+	text: str
+	do: fn()
+	inf: inf
+}
+
+var (
+	last: int
+	freq: int
+
+	infs: []infc
+	curr: []inf
+
+	tmpprjs: ^[]projectile.prj
+	tmpenms: ^[]enemy.enm
+)
+
+fn init*() {
+	last = global.t
+	freq = 5000
+
+	infs = []infc{
+		infc {9, 0, 2000, "slowdown", fn() { player.magespeed = 0.02 }, inf {0, fn() { player.magespeed = 0.1 }}}, 
+		infc {19, 10, 2000, "speedup", fn() { player.magespeed = 0.14 }, inf {0, fn() { player.magespeed = 0.1 }}}, 
+		infc {24, 20, 0, "shield", fn() { player.shieldend = global.t + 10000 }, inf {0, fn() {  }}}, 
+		infc {33, 25, 0, "health regen", fn() { player.hp = 20 }, inf {0, fn() { }}},
+		infc {39, 35, 0, "bullet delete", fn() { tmpprjs^ = []projectile.prj{} }, inf {0, fn() { }}},
+		infc {44, 40, 0, "bullet flip", fn() { if len(tmpprjs^) == 0 { return }; i := std.rand()%len(tmpprjs^); tmpprjs^[i].mx *= -1; tmpprjs^[i].my *= -1; if tmpprjs^[i].author == -1 { tmpprjs^[i].author = 201 } else { tmpprjs^[i].author = -1 }  }, inf {0, fn() { }}},
+		infc {49, 45, 0, "mana drain", fn() { for i:=0; player.mana > 0 && i <= 2; i++ { player.mana-- } }, inf {0, fn() { }}},
+		infc {54, 50, 0, "mana regen", fn() { player.mana = 10 }, inf {0, fn() { }}},
+		infc {56, 55, 0, "village wipe", fn() { if tmpenms != null { tmpenms^ = []enemy.enm{} } }, inf {0, fn() { }}}}
+
+	curr = []inf{}
+}
+
+fn handle*(prjs: ^[]projectile.prj, enms: ^[]enemy.enm) {
+	todel := []int{}
+	for i:=0; i < len(curr); i++ {
+		if global.t >= curr[i].end {
+			curr[i].endfunc()
+			todel = append(todel, i)
+		}
+	}
+
+	for i:=0; i < len(todel); i++ {
+		curr = delete(curr, todel[i] - i)
+	}
+
+	if global.t - last <= freq {
+		return
+	}
+
+	tmpprjs = prjs
+	tmpenms = enms
+
+	rng := std.rand()%100
+	
+	for i:=0; i < len(infs); i++ {
+		if rng >= infs[i].b && rng <= infs[i].s {
+			ci := len(curr)
+			curr = append(curr, infs[i].inf)
+			curr[ci].end = global.t + infs[i].l
+			infs[i].do()
+			hud.inftext = "New influence: " + infs[i].text
+			hud.infend = global.t + 2200
+			global.infsnd.play()
+			break
+		}
+	}
+
+	last = global.t
+}

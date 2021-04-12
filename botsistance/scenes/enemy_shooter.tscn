@@ -1,0 +1,111 @@
+[gd_scene load_steps=14 format=2]
+
+[ext_resource path="res://sprites/enemy_shooter.png" type="Texture" id=1]
+[ext_resource path="res://scripts/enemyBase.gd" type="Script" id=2]
+[ext_resource path="res://scripts/enemy_clicker.gd" type="Script" id=3]
+[ext_resource path="res://sprites/robot-outline.png" type="Texture" id=4]
+[ext_resource path="res://etc/stylebox.tres" type="StyleBox" id=5]
+[ext_resource path="res://etc/scenestakeDmg.tres" type="Animation" id=6]
+[ext_resource path="res://scenes/killparticles.tscn" type="PackedScene" id=7]
+[ext_resource path="res://sounds/robot_spawn.wav" type="AudioStream" id=8]
+
+[sub_resource type="StyleBoxEmpty" id=1]
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 9.00444, 7.72128 )
+
+[sub_resource type="CircleShape2D" id=3]
+radius = 933.152
+
+[sub_resource type="CircleShape2D" id=4]
+radius = 92.2129
+
+[sub_resource type="CircleShape2D" id=5]
+radius = 29.2715
+
+[node name="enemy_shooter" type="Node2D"]
+
+[node name="bullets" type="Node2D" parent="."]
+
+[node name="shooter" type="KinematicBody2D" parent="." groups=[
+"attackable",
+]]
+script = ExtResource( 2 )
+
+[node name="Control" type="Control" parent="shooter"]
+margin_left = -11.3853
+margin_top = -26.8294
+margin_right = 39.6147
+margin_bottom = 24.1706
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ProgressBar" type="ProgressBar" parent="shooter/Control"]
+margin_right = 22.0
+margin_bottom = 4.0
+custom_styles/fg = ExtResource( 5 )
+custom_styles/bg = SubResource( 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+value = 20.0
+percent_visible = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="collider" type="CollisionShape2D" parent="shooter"]
+position = Vector2( 0, 3 )
+shape = SubResource( 2 )
+disabled = true
+
+[node name="outline" type="Sprite" parent="shooter"]
+position = Vector2( -0.371626, -0.797303 )
+scale = Vector2( 0.64, 0.64 )
+texture = ExtResource( 4 )
+
+[node name="icon" type="Sprite" parent="shooter"]
+scale = Vector2( 0.16, 0.16 )
+texture = ExtResource( 1 )
+
+[node name="Area2D" type="Area2D" parent="shooter"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="shooter/Area2D"]
+shape = SubResource( 3 )
+
+[node name="clickArea" type="Area2D" parent="shooter"]
+script = ExtResource( 3 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="shooter/clickArea"]
+position = Vector2( 0.0222626, 2.14926 )
+shape = SubResource( 4 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="shooter"]
+anims/scenestakeDmg = ExtResource( 6 )
+
+[node name="explosion" parent="shooter" instance=ExtResource( 7 )]
+position = Vector2( 0.213058, 3.20975 )
+
+[node name="collisionArea" type="Area2D" parent="shooter"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="shooter/collisionArea"]
+shape = SubResource( 5 )
+
+[node name="Button" type="Button" parent="shooter"]
+margin_left = -60.0
+margin_top = -60.0
+margin_right = 60.0
+margin_bottom = 60.0
+focus_mode = 0
+enabled_focus_mode = 0
+flat = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="shooter"]
+stream = ExtResource( 8 )
+autoplay = true
+[connection signal="body_entered" from="shooter/collisionArea" to="shooter" method="_on_collisionArea_body_entered"]
+[connection signal="mouse_entered" from="shooter/Button" to="shooter" method="_on_Button_mouse_entered"]
+[connection signal="mouse_exited" from="shooter/Button" to="shooter" method="_on_Button_mouse_exited"]
+[connection signal="pressed" from="shooter/Button" to="shooter" method="_on_Button_pressed"]

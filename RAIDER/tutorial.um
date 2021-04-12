@@ -1,0 +1,138 @@
+
+import (
+	"tophat/input.um"
+	"tophat/rawdraw.um"
+	"tophat/entity.um"
+	"tophat/polygon.um"
+	"tophat/image.um"
+	"tophat/audio.um"
+
+	"tophat/std/std.um"
+
+	"projectile.um"
+	"player.um"
+	"global.um"
+)
+
+const (
+	MOVEMENT = 0
+	ACTIONS = 1
+	END = 2
+)
+
+var (
+	progress: []bool
+	prjs: []projectile.prj
+
+	part: int
+
+	enm: entity.ent
+
+	prjimg: image.img
+)
+
+fn init*() {
+	progress = []bool{false, false, false, false}
+	prjs = []projectile.prj{}
+
+	part = MOVEMENT
+
+	prjimg = image.load("assets/graphics/projectiles/playerprj.png")
+}
+
+fn start*() {
+	progress = []bool{false, false, false, false}
+	part = MOVEMENT
+}
+
+fn deinit*() {
+	prjimg.delete()
+}
+
+fn run*() {
+	rawdraw.setcolor(0x107747ff)
+	rawdraw.drawrect(0, 0, 192, 108)
+
+	mx := player.handle([]^entity.ent{})
+
+	switch part {
+	case MOVEMENT:
+		rawdraw.drawtext("Use w, a, s and d to move.", 10, 10, 0xddddddff, 1.4)
+  
+		if input.ispressed(input.KEY_W) {
+			progress[0] = true
+		}
+		if input.ispressed(input.KEY_A) {
+			progress[1] = true
+		}
+		if input.ispressed(input.KEY_S) {
+			progress[2] = true
+		}
+		if input.ispressed(input.KEY_D) {
+			progress[3] = true
+		}
+
+		for i:=0; i < len(progress); i++ {
+			if !progress[i] {
+				break
+			}
+
+			if i == 3 {
+				part = ACTIONS
+				progress = []bool{false, false}
+			}
+		}
+	
+	case ACTIONS:
+		rawdraw.drawtext("You have THREE abilities. Two of them cost mana.\nDash: speedup and invunerability: 1 mana, SPACE\nShield: invunerability          : 4 mana, E\nShoot: shoots bullet            : 0 mana, ENTER\nTry them out. You can continue by presing ESCAPE", 10, 10, 0xddddddff, 1.2)
+		
+		if input.ispressed(input.KEY_E) {
+			progress[0] = true
+		}
+
+		if input.ispressed(input.KEY_SPACE) {
+			progress[1] = true
+		}
+
+		if input.isjustpressed(input.KEY_ENTER) {
+			cp := len(prjs)
+			rot := 90 * mx - 90
+      
+			if rot == -90 {
+				rot = 0
+			}
+      
+			prjs = append(prjs, projectile.mk(rot, 0.20, entity.mk(polygon.mk(0, 0, []int32{0, 0, 0, 8, 8, 8, 8, 0}), 0x000000ff, std.rand()+201), 0, player.mage.id))
+			prjs[cp].ent.p.x = player.mage.p.x
+			prjs[cp].ent.p.y = player.mage.p.y
+			prjs[cp].ent.image = prjimg
+			prjs[cp].ent.setscale(1.4, 1.4)
+
+			global.shtsnd.play()
+		}
+
+		for i:=0; i < len(prjs); i++ {
+			prjs[i].handle([]^entity.ent{})
+		}
+
+		if input.ispressed(input.KEY_ESCAPE) {
+			part = END
+		}
+
+	case END:
+
+		rawdraw.drawtext("Congrats! You completed the tutorial.\nPress ENTER to continue.", 10, 10, 0xddddddff, 1.4)
+
+		if input.ispressed(input.KEY_ENTER) {
+			global.scene = global.MENU
+		}
+	}
+
+	player.mage.draw(global.cam)
+	if player.shieldend > global.t {
+		player.shield.p.x = player.mage.p.x - 3
+		player.shield.p.y = player.mage.p.y - 2
+		player.shield.draw(global.cam)
+	}
+}
+

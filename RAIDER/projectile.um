@@ -1,0 +1,95 @@
+
+import (
+	"tophat/entity.um"
+	"tophat/image.um"
+	"tophat/tophat.um"
+	"tophat/rectangle.um"
+
+	"tophat/std/std.um"
+
+	"global.um"
+)
+
+var (
+	animations: [][]image.img
+)
+
+type prj* = struct {
+	rot: real 
+	mx: real
+	my: real
+	ent: entity.ent
+	anim: []image.img
+	author: int32
+}
+
+type cfg* = struct {
+	speed: real
+	ent: entity.ent
+	anim: int
+}
+
+fn init*() {
+	animations = [][]image.img{[]image.img{image.load("assets/graphics/projectiles/testprj.png")}}
+}
+
+fn deinit*() {
+	for i:=0; i < len(animations); i++ {
+		for j in animations[i] {
+			j.delete()
+		}
+	}
+}
+
+fn mk*(rot: real, speed: real, ent: entity.ent, anim: int, author: int32): prj {
+	p := prj{}
+	p.rot = rot
+	p.ent = ent
+	p.anim = animations[anim]
+	p.author = author
+
+	p.mx = speed * cos(rot * std.pi / 180)
+	p.my = speed * sin(rot * std.pi / 180)
+
+	p.ent.image = p.anim[0]
+	p.ent.setrot(rot)
+
+	return p
+}
+
+fn (p: ^prj) handle*(scn: []^entity.ent): int {
+	//p.ent.image = p.anim[(round(real(global.t)/250) % len(p.anim))]
+
+	p.ent.p.x += p.mx * tophat.delta
+	p.ent.p.y += p.my * tophat.delta
+
+	if round(fabs(p.ent.p.x) + 96) % 192 < 3 {
+		return -12
+	}
+
+	if round(fabs(p.ent.p.y) + 54) % 108 < 3 {
+		return -12
+	}
+		
+	p.ent.draw(global.cam)
+	coll := p.ent.getcoll(scn)
+
+	if coll == p.author {
+		return 0
+	}
+
+	if coll > 200 {
+		if p.author == -1 {
+			return coll
+		}
+	}
+
+	switch coll {
+	case -1:
+		return -1
+	case -10:
+		return -10
+	}
+
+	return 0
+}

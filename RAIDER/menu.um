@@ -1,0 +1,58 @@
+
+import (
+	"tophat/rectangle.um"
+	"tophat/rawdraw.um"
+	"tophat/input.um"
+
+	"global.um"
+	"gamescn.um"
+	"tutorial.um"
+)
+
+var (
+	title: rectangle.rect
+
+	playbutton: rectangle.rect
+	tutbutton: rectangle.rect
+
+	scorelabel: rectangle.rect
+)
+
+fn init*() {
+
+	w, h := rawdraw.textsize("RAIDER", 5)
+	title = rectangle.rect{(global.cam.w - w)/2, global.cam.h/2 - h - 12, w, h}
+
+	w, h = rawdraw.textsize("PLAY", 2)
+	playbutton = rectangle.rect{(global.cam.w - w)/2, global.cam.h/2 + 8, w, h}
+
+	w, h = rawdraw.textsize("TUTORIAL", 2)
+	tutbutton = rectangle.rect{(global.cam.w - w)/2, global.cam.h/2 + h + 12, w, h}
+
+	w, h = rawdraw.textsize("RAIDED: 0 | BEST: 0", 2)
+	scorelabel = rectangle.rect{(global.cam.w - w)/2, global.cam.h/2 - h + 4, w, h}
+}
+
+fn run*() {
+
+	if input.isjustpressed(input.LMB) {
+		x, y := input.getmousepos()
+
+		if x >= playbutton.x && y >= playbutton.y && x <= playbutton.x + playbutton.w && y <= playbutton.y + playbutton.h {
+			gamescn.start()
+			global.scene = global.GAME
+		}
+
+		if x >= tutbutton.x && y >= tutbutton.y && x <= tutbutton.x + tutbutton.w && y <= tutbutton.y + tutbutton.h {
+			tutorial.start()
+			global.scene = global.TUTORIAL
+		}
+	}
+
+	rawdraw.drawtext("PLAY", playbutton.x, playbutton.y, 0xddddddff, 2)
+	rawdraw.drawtext("TUTORIAL", tutbutton.x, tutbutton.y, 0xddddddff, 2)
+
+	//rawdraw.drawtext("RAIDED: " + repr(global.raided) + "| " + "BEST: " + repr(global.top), scorelabel.x, scorelabel.y, 0xddddddff, 2)
+	rawdraw.drawtext("RAIDED: " + "816" + "| " + "BEST: " + "816", scorelabel.x, scorelabel.y, 0xddddddff, 2)
+	rawdraw.drawtext("RAIDER", title.x, title.y, 0xddddddff, 5)
+}

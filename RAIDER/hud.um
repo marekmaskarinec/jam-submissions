@@ -1,0 +1,58 @@
+
+import (
+	"tophat/image.um"
+	"tophat/rawdraw.um"
+	"tophat/tophat.um"
+
+	"tophat/std/std.um"
+
+	"player.um"
+	"global.um"
+)
+
+var (
+	hearth*: image.img
+	mana*: image.img
+
+	manarot: real
+
+	infend*: int
+	inftext*: str
+)
+
+fn init*() {
+	hearth = image.load("assets/graphics/ui/hearth.png")
+
+	mana = image.load("assets/graphics/ui/mana.png")
+
+	manarot = 0
+
+	infend = 0
+}
+
+fn deinit*() {
+	hearth.delete()
+	mana.delete()
+}
+
+fn handle*() {
+	ox := 1
+	oy := 1
+
+	for i:=0; i < round(player.hp / 2.0) ; i++ {
+		hearth.draw(ox + i * 7, oy, 0, 1)
+	}
+
+	ox = 1
+	oy = 8
+
+	for i:=0; i < player.mana; i++ {
+		manarot += 0.0086 * tophat.delta
+		mana.draw(ox + i * 7, oy, round(manarot), 1)
+	}
+
+	if global.t < infend {
+		w, h := rawdraw.textsize(inftext, 2)
+		rawdraw.drawtext(inftext, round((global.cam.w - w)/2), 20, 0xddddddff, 2)
+	}
+}

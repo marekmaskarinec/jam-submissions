@@ -1,0 +1,81 @@
+
+import (
+	"tophat/rectangle.um"
+	"tophat/entity.um"
+	"tophat/audio.um"
+)
+
+const (
+	MENU* = 0
+	GAME* = 1
+	TUTORIAL* = 2
+)
+
+var (
+	t*: int
+	cam*: rectangle.rect
+
+	w*, h*: int32
+
+	scene*: int
+
+	raided*: int
+	top*: int
+	
+	infsnd*: audio.sound
+	hitsnd*: audio.sound
+	diesnd*: audio.sound
+	shtsnd*: audio.sound
+	sarr: []audio.sound
+)
+
+fn init*() {
+	infsnd = audio.load("assets/sounds/influence-sound.wav")
+	infsnd.vol(1)
+	hitsnd = audio.load("assets/sounds/playerhurt.wav")
+	hitsnd.vol(0.8)
+	diesnd = audio.load("assets/sounds/enemy-die.wav")
+	diesnd.vol(0.2)
+	shtsnd = audio.load("assets/sounds/shoot.wav")
+	shtsnd.vol(0.2)
+
+	//sarr = []audio.sound{infsnd, hitsnd, diesnd, shtsnd}
+	//audio.setsounds(sarr)
+}
+
+fn getdist*(x1, y1, x2, y2: real): real {
+	var dx, dy: real 
+
+	dx = x1 - x2
+	dy = y1 - y2
+
+	return std.sqrt(dx * dx + dy * dy)
+}
+
+fn stepify*(val, step: real): real {
+	if step != 0 {
+		val = trunc(val / step + 0.5) * step
+	}
+	return val
+}
+
+// this isn't that fast, but the max number of trees is 6, so it's ok. TODO use better sort algorithm before implementing in tophat
+fn ysort*(ents: []entity.ent): []entity.ent {
+	swapped := true
+
+	for swapped {
+		swapped = false
+
+		for i:=1; i < len(ents); i++ {
+			if ents[i-1].p.y > ents[i].p.y {
+				tmp := ents[i]
+				ents[i] = ents[i-1]
+				ents[i-1] = tmp
+
+				swapped = true
+			}
+		}
+	}
+
+	return ents
+}

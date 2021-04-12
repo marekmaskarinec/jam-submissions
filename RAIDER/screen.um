@@ -1,0 +1,81 @@
+// vim: filetype=umka
+
+import (
+	"generator.um"
+	"village.um"
+
+	"tophat/std/std.um"
+)
+
+var (
+	scrns1: [][]int
+	scrns2: [][]int
+	scrns3: [][]int
+	scrns4: [][]int
+
+	villages: []village.villg
+)
+
+fn init*() {
+	villages = []village.villg{}
+}
+
+fn start*() {
+	scrns1 = [][]int{}
+	scrns2 = [][]int{}
+	scrns3 = [][]int{}
+	scrns4 = [][]int{}
+}
+
+fn scrnchange*(x, y: int32): generator.screen {
+	sarr := &scrns1
+
+	if x < 0 && y < 0 {
+		sarr = &scrns3
+	} else if x < 0 {
+		sarr = &scrns2
+	} else if y < 0 {
+		sarr = &scrns4
+	}
+
+	nx := round(fabs(real(x))) / 192
+	ny := round(fabs(real(y))) / 108
+
+	for len(sarr^) <= ny {
+		sarr^ = append(sarr^, make([]int, nx))
+	}
+
+	for len(sarr^[ny]) <= nx {
+		sarr^[ny] = append(sarr^[ny], 0)
+	}
+
+	if sarr[ny][nx] == 0 {
+		sarr^[ny][nx] = std.rand()+1
+	}
+
+	ox := 0
+	oy := 0
+	if x < 0 {
+		ox = 196
+	}
+	if y < 0 {
+		oy = 108
+	}
+	
+	scrn := generator.gen(sarr^[ny][nx], x - ox, y - oy)
+
+	if scrn.hasvillg {
+		for i:=0; i < len(villages); i++ {
+			if villages[i].px == x && villages[i].py == y {
+				scrn.villg = &villages[i]
+				return scrn
+			}
+		}
+  
+		cv := len(villages)
+		villages = append(villages, village.mk(sarr^[ny][nx], x - ox, y - oy))
+		scrn.villg = &villages[cv]
+	}
+
+	return scrn
+}

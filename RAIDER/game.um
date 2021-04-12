@@ -1,0 +1,78 @@
+// vim: filetype=umka
+
+import (
+	"tophat/rectangle.um"
+	"tophat/tophat.um"
+	"tophat/rawdraw.um"
+
+	"tophat/std/std.um"
+
+	"gamescn.um"
+	"enemy.um"
+	"generator.um"
+	"screen.um"
+	"village.um"
+	"projectile.um"
+	"player.um"
+	"hud.um"
+	"influence.um"
+	"global.um"
+	"effect.um"
+
+	"tutorial.um"
+
+	"menu.um"
+)
+
+var (
+	bgcolor: uint32
+)
+
+fn handledestroy() {
+	player.deinit()
+	enemy.deinit()
+	hud.deinit()
+	effect.deinit()
+}
+
+fn main() {
+	tophat.setup("RAIDER", 1280, 720)
+
+	cam := rectangle.mk(96, 54, 192, 108)
+
+	std.srand(std.time())
+
+	enemy.init()
+	village.init()
+	screen.init()
+	generator.init()
+	gamescn.init()
+	projectile.init()
+	player.init()
+	hud.init()
+	influence.init()
+	effect.init()
+
+	global.init()
+
+	tutorial.init()
+	
+	menu.init()
+
+	std.srand(std.time())
+	bgcolor = []uint32{0x107747ff, 0x9e8d0cff, 0x440404ff}[std.rand()%3]
+
+	for true {
+		tophat.cycle(&global.w, &global.h, bgcolor, cam)
+		global.t += tophat.delta
+
+		switch global.scene {
+		case global.MENU:
+			menu.run()
+		case global.GAME:
+			gamescn.run()
+		case global.TUTORIAL:
+			tutorial.run()
+		}
+	}
+}

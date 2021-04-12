@@ -1,0 +1,73 @@
+
+import (
+	"tophat/image.um"
+	"tophat/tophat.um"
+
+	"global.um"
+)
+
+type efc* = struct {
+	anim: []image.img
+	rot: real
+	s: real
+	fps: int
+
+	px: real
+	py: real 
+
+	end: int
+
+	ztime: int
+
+	frame: int
+}
+
+var (
+	deatheffect*: efc								
+)
+
+fn mk*(px, py: int32, anim: []image.img, fps: int): efc
+
+fn init*() {
+	deatheffect = mk(0, 0, []image.img{image.load("assets/graphics/deatheffect/de1.png"), image.load("assets/graphics/deatheffect/de2.png"), image.load("assets/graphics/deatheffect/de3.png"), image.load("assets/graphics/deatheffect/de4.png"), image.load("assets/graphics/deatheffect/de5.png")}, 8)
+	deatheffect.s = 1.4
+}
+
+fn deinit*() {
+	for i in deatheffect.anim {
+		i.delete()
+	}
+}
+
+fn mk*(px, py: int32, anim: []image.img, fps: int): efc {
+	e := efc{}
+
+	e.anim = append(anim, anim[len(anim)-1])
+
+	e.fps = fps
+	e.end = global.t + 1000/fps * len(anim)
+	e.s = 1
+	e.rot = 0
+
+	e.px = px
+	e.py = py
+
+	return e
+}
+
+fn (e: ^efc) start*() {
+	e.end = global.t + 1000/e.fps * len(e.anim)
+	e.ztime = global.t
+}
+
+fn (e: ^efc) handle*(): bool {
+	e.frame = (round(real(global.t-e.ztime)/round((1000.0/e.fps))) % len(e.anim))
+
+	e.anim[e.frame].draw(round(e.px) - global.cam.x + global.cam.w/2, round(e.py) - global.cam.y + global.cam.h/2, round(e.rot), e.s)
+
+	if global.t >= e.end || e.frame == len(e.anim) - 1 {
+		return true
+	}
+
+	return false
+}

@@ -1,0 +1,209 @@
+
+import (
+	"tophat/entity.um"
+	"tophat/image.um"
+	"tophat/polygon.um"
+	"tophat/input.um"
+	"tophat/tophat.um"
+	"tophat/rectangle.um"
+
+	"global.um"
+)
+
+var (
+	mage*: entity.ent
+	mageleft: []image.img
+	mageright: []image.img
+	mageidleright: []image.img
+	mageidleleft: []image.img
+	mageanim: ^[]image.img
+	magespeed*: real
+
+	hp*: int
+	mana*: int
+	lmanaadd: int
+
+	slideend*: int
+	slidelen*: int
+	slidespeed*: real
+	slidex*: int
+	slidey*: int
+
+	shield*: entity.ent
+	shieldend*: int
+	shieldlen: int
+)
+
+fn init*() {
+	mage = entity.mk(polygon.mk(96, 54, []int32{0, 0, 0, 160, 120, 160, 120, 0}), 0x4400ffff, -1)
+	mage.setscale(0.05, 0.05)
+
+	mageleft = []image.img{image.load("assets/graphics/mage-walk1.png"), image.load("assets/graphics/mage-walk2.png")}
+	mageleft[0].flipv()
+	mageleft[1].flipv()
+	mageright = []image.img{image.load("assets/graphics/mage-walk1.png"), image.load("assets/graphics/mage-walk2.png")}
+
+	mageidleright = []image.img{image.load("assets/graphics/mage-normal.png"), image.load("assets/graphics/mage-idle.png")}
+	mageidleleft = []image.img{image.load("assets/graphics/mage-normal.png"), image.load("assets/graphics/mage-idle.png")}
+	mageidleleft[0].flipv()
+	mageidleleft[1].flipv()
+
+	mageanim = &mageidleright
+	magespeed = 0.1
+
+	hp = 10
+	mana = 10
+	lmanaadd = global.t
+
+	slideend = 0
+	slidelen = 80
+	slidespeed = 0.6
+	slidex = 0
+	slidey = 0
+
+	shield = entity.mk(polygon.mk(96, 54, []int32{0, 0, 0, 10, 8, 10, 8, 0}), 0x880000ff, -2)
+	shield.image = image.load("assets/graphics/shield.png")
+	shield.setscale(1.4, 1.4)
+	shieldend = 0
+	shieldlen = 1400
+}
+
+fn deinit*() {
+	for i in mageleft {
+		i.delete()
+	}
+
+	for i in mageright {
+		i.delete()
+	}
+
+	for i in mageidleright {
+		i.delete()
+	}
+
+	for i in mageidleleft {
+		i.delete()
+	}
+}
+
+fn gameend*() {
+		hp = 20
+		global.scene = global.MENU
+		if global.top < global.raided {
+			global.top = global.raided
+		}
+}
+
+fn handle*(scn: []^entity.ent): int {
+	mage.image = mageanim^[(round(real(global.t)/250) % len(mageanim^))]
+
+	mage.animate(global.t, 4, mageanim)
+
+	mx := 0
+	my := 0
+
+	if slideend < global.t {
+		if input.ispressed(input.KEY_A) {
+			mx -= 1
+			mageanim = &mageleft
+		}
+  
+		if input.ispressed(input.KEY_D) {
+			mx += 1
+			mageanim = &mageright
+		}
+  
+		if input.ispressed(input.KEY_W) {
+			my -= 1
+		}
+  
+		if input.ispressed(input.KEY_S) {
+			my += 1
+		}
+  
+		if mana >= 4 && input.isjustpressed(input.KEY_E) {
+			shieldend = global.t + shieldlen
+			mana -= 4
+		}
+
+		if mx == 0 && my == 0 {
+			if mageanim == &mageleft {
+				mageanim = &mageidleleft
+			} else if mageanim == &mageright {
+				mageanim = &mageidleright
+			}
+		} else if my != 0 {
+			if mageanim == &mageidleleft {
+				mageanim = &mageleft
+			} else if mageanim == &mageidleright {
+				mageanim = &mageright
+			}
+		}
+
+		if mana > 0 && input.isjustpressed(input.KEY_SPACE) {
+			slideend = global.t + slidelen
+
+			if mx == 0 && my == 0 {
+				mx = 1
+			}
+	
+			slidex = mx
+			slidey = my
+			mana--
+		}
+	} else {
+		mx = slidex
+		my = slidey
+	}
+
+
+	if slideend < global.t {
+		mage.p.x += magespeed * tophat.delta * mx
+	} else {
+		mage.p.x += slidespeed * tophat.delta * mx
+	}
+	coll := mage.getcoll(scn)
+	if coll > 0 {
+
+		if mx == 0 && my == 0 {
+			mx = -1
+		}
+
+		for coll > 0 {
+			mage.p.x -= mx
+
+			coll = mage.getcoll(scn)
+		}
+	}
+
+	if slideend < global.t {
+		mage.p.y += magespeed * tophat.delta * my
+	} else {
+		mage.p.y += slidespeed * tophat.delta * my
+	}
+	coll = mage.getcoll(scn)
+	if coll > 0 {
+		for coll > 0 {
+			mage.p.y -= my
+
+			coll = mage.getcoll(scn)
+		}
+	}
+
+	if mageanim == &mageidleleft || mageanim == &mageleft {
+		mx = -1
+	} else if mageanim == &mageidleright || mageanim == &mageright{
+		mx = 1
+	}
+
+	if mana < 10 && global.t - lmanaadd >= 2500 {
+		mana++
+		lmanaadd = global.t
+	}
+
+	if hp <= 0 {
+		gameend()
+	}
+
+	return mx
+}

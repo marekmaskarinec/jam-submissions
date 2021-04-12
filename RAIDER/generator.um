@@ -1,0 +1,57 @@
+// vim: filetype=umka
+
+import (
+	"tophat/entity.um"
+	"tophat/image.um"
+	"tophat/polygon.um"
+	"tophat/std/std.um"
+
+	"village.um"
+	"enemy.um"
+	"global.um"
+)
+
+type screen* = struct {
+	color: uint32
+	trees: []entity.ent
+	hasvillg: bool
+	villg: ^village.villg
+}
+
+var (
+	colors: []uint32
+	trees: []image.img
+)
+
+fn init*() {
+	colors = []uint32{0x107747ff, 0x9e8d0cff, 0x440404ff}//0x140d01ff}
+	trees = []image.img{image.load("assets/graphics/biomes/grass-tree.png"), image.load("assets/graphics/biomes/desert-tree.png"), image.load("assets/graphics/biomes/lava-tree.png")}
+}
+
+fn gen*(seed: int, rx, ry: int32): screen {
+	std.srand(seed)
+
+	biome := std.rand()%len(colors)
+	s := screen{colors[biome], []entity.ent{}, false, null}
+
+	if 40 > std.rand()%100 {
+		s.hasvillg = true
+		return s
+	}
+
+	treenum := std.rand()%6 + 2
+	for i:=0; i < treenum; i++ {
+		s.trees = append(s.trees, entity.mk(polygon.mk(rx + std.rand()%150 + 10, ry + std.rand()%70 + 10, []int32{0, 0, 0, 7, 6, 7, 6, 0}), 0x00ff00ff, 0))
+
+		scn := make([]^entity.ent, len(s.trees))
+		for j:=0; j < len(s.trees); j++ {
+			scn = append(scn, &s.trees[j])
+		}		
+
+		s.trees[i].image = trees[biome]
+		s.trees[i].setscale(3, 3)
+	}
+	s.trees = global.ysort(s.trees)
+
+	return s
+}

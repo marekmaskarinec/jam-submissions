@@ -1,0 +1,230 @@
+
+import (
+	"tophat/tophat.um"
+	"tophat/rawdraw.um"
+	"tophat/image.um"
+	"tophat/entity.um"
+	"tophat/polygon.um"
+	"tophat/input.um"
+	"tophat/rectangle.um"
+	"tophat/audio.um"
+	
+	"generator.um"
+	"screen.um"
+	"projectile.um"
+	"village.um"
+	"enemy.um"
+	"player.um"
+	"global.um"
+	"hud.um"
+	"influence.um"
+	"effect.um"
+
+	"tophat/std/std.um"
+)
+
+var (
+	//t: int
+	cscrn: generator.screen
+	//cam: rectangle.rect
+	ta: int
+
+	testprjprefab: entity.ent
+
+	prjs: []projectile.prj
+
+	efcs: []effect.efc
+
+	prjimg: image.img
+)
+
+fn init*() {
+	global.cam = rectangle.mk(96, 54, 192, 108)
+	ta = 1
+
+	testprjprefab = entity.mk(polygon.mk(0, 0, []int32{0, 0, 0, 8, 8, 8, 8, 0}), 0x000000ff, std.rand()+201)
+	prjimg = image.load("assets/graphics/projectiles/playerprj.png")
+	testprjprefab.image = prjimg
+	testprjprefab.setscale(1.4, 1.4)
+}
+
+fn start*() {
+	screen.start()
+	cscrn = screen.scrnchange(0, 0)
+	
+	prjs = []projectile.prj{}
+
+	efcs = []effect.efc{}
+
+	player.mage.p.x = 96
+	player.mage.p.y = 54
+	player.hp = 20
+	player.mana = 10
+	global.raided = 0
+}
+
+fn enmdie(val: int) {
+	ce := len(efcs)
+	efcs = append(efcs, effect.deatheffect)
+	efcs[ce].px = cscrn.villg.enemies[val].ent.p.x
+	efcs[ce].py = cscrn.villg.enemies[val].ent.p.y
+	efcs[ce].start()
+
+	cscrn.villg.enemies = delete(cscrn.villg.enemies, val)					
+
+	village.setstatus(cscrn.villg.px, cscrn.villg.py, len(cscrn.villg.enemies))
+
+	global.diesnd.play()
+}
+
+fn run*() {
+
+	lx := global.cam.x
+	ly := global.cam.y
+
+	xm := 1
+	ym := 1
+
+	if player.mage.p.x < 0 {
+		xm = -1
+	}
+	if player.mage.p.y < 0 {
+		ym = -1
+	}
+
+	global.cam.x = round(global.stepify(fabs(player.mage.p.x), 192))
+	global.cam.y = round(global.stepify(fabs(player.mage.p.y), 108))
+	
+	global.cam.x *= xm
+	global.cam.y *= ym
+
+	if global.cam.x != lx || global.cam.y != ly {
+		cscrn = screen.scrnchange(global.cam.x - (global.cam.w/2 * xm), global.cam.y - (global.cam.h/2 * ym))
+	}
+
+	scn := []^entity.ent{}
+	if cscrn.villg == null {
+		for i:=0; i < len(cscrn.trees); i++ {
+			scn = append(scn, &cscrn.trees[i])
+		}
+	}
+
+	mx := player.handle(scn)
+
+	if input.isjustpressed(input.KEY_ESCAPE) {
+		player.gameend()
+	}
+
+	if input.isjustpressed(input.KEY_ENTER) {
+		cp := len(prjs)
+		rot := 90 * mx - 90
+
+		if rot == -90 {
+			rot = 0
+		}
+ 
+		prjs = append(prjs, projectile.mk(rot, 0.20, testprjprefab, 0, player.mage.id))
+		prjs[cp].ent.p.x = player.mage.p.x
+		prjs[cp].ent.p.y = player.mage.p.y
+		prjs[cp].ent.image = prjimg
+
+		global.shtsnd.play()
+	}
+
+	// drawing and effects
+	rawdraw.setcolor(cscrn.color)
+	rawdraw.drawrect(0, 0, global.cam.w, global.cam.h)
+
+	bscn := []^entity.ent{&player.mage}
+	if cscrn.hasvillg {
+		cscrn.villg.handle()
+		
+		for i:=0; i < len(cscrn.villg.enemies); i++ {
+			bscn = append(bscn, &cscrn.villg.enemies[i].ent)
+			isshooting := cscrn.villg.enemies[i].handle(player.mage)
+		
+			if isshooting {
+				prjs = append(prjs, cscrn.villg.enemies[i].prj)
+			}
+		}
+
+		bscn = append(bscn, &cscrn.villg.fire)
+	}
+
+	player.mage.draw(global.cam)
+	if player.shieldend > global.t {
+		player.shield.p.x = player.mage.p.x - 3
+		player.shield.p.y = player.mage.p.y - 2
+		player.shield.draw(global.cam)
+	}
+
+	if cscrn.hasvillg && player.slideend > global.t {
+		coll := player.mage.getcoll(bscn)
+		
+		if coll > 200 {
+			if val := enemy.dmgbyid(coll, cscrn.villg.enemies, 1); val >= 0 {
+				enmdie(val)
+			}
+		}
+	}
+
+	for i:=0; i < len(cscrn.trees); i++ {
+		if cscrn.trees[i].rot > 6 {
+			ta = -1
+		}
+		if cscrn.trees[i].rot < -6 {
+			ta = 1
+		}
+  
+		// rotating like this, so i don't affect collisions
+		cscrn.trees[i].rot += ta * (0.01 + real(std.rand()%10-5)/800) * tophat.delta
+		cscrn.trees[i].draw(global.cam)
+	}
+
+	todel := []int{}
+	for i:=0; i < len(prjs); i++ {
+		coll := prjs[i].handle(bscn)
+		if coll == -12 {
+			//printf("%d\n", global.t)
+		}
+		switch coll {
+		case 0:
+			continue
+		case -1:
+			if player.slideend < global.t && player.shieldend < global.t{
+				global.hitsnd.play()
+				player.hp -= 1
+			}
+		default:
+			if coll > 200 {
+				if val := enemy.dmgbyid(coll, cscrn.villg.enemies, 1); val >= 0 {
+					enmdie(val)
+				}
+			}
+		}
+		todel = append(todel, i)
+	}
+
+	for i:=0; i < len(todel); i++ {
+		prjs = delete(prjs, todel[i] - i)
+	}
+
+	todel = []int{}
+	for i:=0; i < len(efcs); i++ {
+		if efcs[i].handle() {
+			todel = append(todel, i)
+		}
+	}
+
+	for i:=0; i < len(todel); i++ {
+		efcs = delete(efcs, todel[i] - i)
+	}
+
+	hud.handle()
+
+	if cscrn.hasvillg {
+		influence.handle(&prjs, &cscrn.villg.enemies)
+	} else {
+		influence.handle(&prjs, null)
+	}
+}

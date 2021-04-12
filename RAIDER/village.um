@@ -1,0 +1,119 @@
+// vim: filetype=umka
+
+import (
+	"tophat/tophat.um"
+	"tophat/entity.um"
+	"tophat/polygon.um"
+	"tophat/rectangle.um"
+	"tophat/image.um"
+
+	"tophat/std/std.um"
+
+	"enemy.um"
+	"projectile.um"
+	"global.um"
+)
+
+
+type villg* = struct {
+	fire: entity.ent
+	enemies: []enemy.enm
+	prize: int
+	raided: bool
+	anim: ^[]image.img
+	px: int32
+	py: int32
+}
+
+type raidstatus = struct {
+	raided: int
+	px: int32
+	py: int32
+}
+
+var (
+	fireanim: []image.img
+	fireanimraided: []image.img
+	enm: enemy.enm
+
+	raidmap: []raidstatus
+)
+
+fn init*() {
+	fireanim = []image.img{image.load("assets/graphics/village/fire1.png"), image.load("assets/graphics/village/fire2.png")}
+	fireanimraided = []image.img{image.load("assets/graphics/village/fire-raided3.png"), image.load("assets/graphics/village/fire-raided1.png")}
+	enm = enemy.mk(1, projectile.cfg{0.08, entity.mk(polygon.mk(0, 0, []int32{0, 0, 0, 8, 8, 8, 8, 0}), 0x000000ff, 300), 0}, 0, 0)
+
+	raidmap = []raidstatus{}
+}
+
+fn getstatus(px, py: int32): int {
+	for s in raidmap {
+		if s.px == px && s.py == py {
+			return s.raided
+		}
+	}
+
+	return -1
+}
+
+fn setstatus*(px, py: int32, status: int) {
+	for i:=0; i < len(raidmap); i++ {
+		if raidmap[i].px == px && raidmap[i].py == py {
+			raidmap[i].raided = status
+			return
+		}
+	}
+
+	raidmap = append(raidmap, raidstatus{status, px, py})
+}
+
+fn mk*(seed: int, x, y: int32): villg {
+	v := villg{}
+
+	v.fire = entity.mk(polygon.mk(x + std.rand()%150 + 10, y + std.rand()%70 + 10, []int32{0, 5, 0, 7, 7, 7, 7, 5}), 0xff0000ff, -10)
+	v.fire.image = fireanim[0]
+	v.fire.setscale(1.2, 1.2)
+	
+	status := getstatus(x, y)
+
+	var enmcount: int
+	if status == -1 {
+		enmcount = std.rand()%4+2
+	} else {
+		enmcount = status
+	}
+
+	std.srand(global.t)
+	v.enemies = make([]enemy.enm, enmcount)
+	for i:=0; i < enmcount; i++ {
+		v.enemies[i] = enm
+		
+		v.enemies[i].ent.id = std.rand()%400 + 200
+		v.enemies[i].ent.p.x = x + std.rand()%150 + 10
+		v.enemies[i].ent.p.y = y + std.rand()%70 + 10
+		v.enemies[i].lastshot = global.t - 650
+	}
+
+	v.anim = &fireanim
+
+	setstatus(x, y, status)
+
+	v.px = x
+	v.py = y
+
+	return v
+}
+
+fn (v: ^villg) handle*() {
+	v.fire.image = v.anim^[(round(real(global.t)/250) % len(v.anim^))]
+
+	if len(v.enemies) <= 0 && !v.raided {
+		v.raided = true
+		v.anim = &fireanimraided
+		setstatus(v.px, v.py, 0)
+		global.raided++
+	}
+
+	v.fire.draw(global.cam)
+}

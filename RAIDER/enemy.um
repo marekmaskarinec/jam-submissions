@@ -1,0 +1,127 @@
+
+import (
+	"tophat/entity.um"
+	"tophat/image.um"
+	"tophat/polygon.um"
+	"tophat/rectangle.um"
+
+	"tophat/std/std.um"
+
+	"global.um"
+	"projectile.um"
+)
+
+type enm* = struct {
+	hp: int
+	ent: entity.ent
+	anim: ^[]image.img
+	prj: projectile.prj
+	pcfg: projectile.cfg
+	lastshot: int
+	shootspeed: int
+}
+
+var (
+	enmprefab: entity.ent
+	enmleft: []image.img
+	enmright: []image.img
+)
+
+fn init*() {
+	enmprefab = entity.mk(polygon.mk(0, 0, []int32{0, 0, 0, 160, 120, 160, 120, 0}), 0x4400ffff, std.rand()%200+1)
+	enmleft = []image.img{image.load("assets/graphics/enemy-normal.png"), image.load("assets/graphics/enemy-idle.png")}
+	enmleft[0].flipv()
+	enmleft[1].flipv()
+	enmright = []image.img{image.load("assets/graphics/enemy-normal.png"), image.load("assets/graphics/enemy-idle.png")}
+	enmprefab.image = enmright[0]
+	enmprefab.setscale(0.05, 0.05)
+}
+
+fn deinit*() {
+	for i in enmleft {
+		i.delete()
+	}
+
+	for i in enmright {
+		i.delete()
+	}
+}
+
+fn dmgbyid*(id: int, enms: []enemy.enm, dmg: int): int {
+	
+	for j:=0; j < len(enms); j++ {
+		if enms[j].ent.id == id {
+			enms[j].hp -= dmg
+		
+			if enms[j].hp <= 0 {
+				return j
+			}
+			break
+		}
+	}
+
+	return -1
+}
+
+fn mk*(hp: int, pcfg: projectile.cfg, px, py: int32): enm {
+	e := enm{}
+
+	e.hp = hp
+	e.pcfg = pcfg
+	e.ent = enmprefab
+	e.ent.p.x = px
+	e.ent.p.y = py
+
+	e.anim = &enmright
+	e.ent.setscale(0.05, 0.05)
+
+	e.shootspeed = 1000
+	e.lastshot = global.t + 1200
+
+	return e
+}
+
+fn (e: ^enm) shoot(x, y: real): projectile.prj {
+	angle := atan2(e.ent.p.y - y, e.ent.p.x - x) * 180 / std.pi + 180
+
+	tr := projectile.mk(angle, e.pcfg.speed, e.pcfg.ent, e.pcfg.anim, e.ent.id)
+	tr.ent.p.x = e.ent.p.x
+	tr.ent.p.y = e.ent.p.y
+	tr.ent.sx = 0.4
+	tr.ent.sy = 0.4
+	//tr.ent.setscale(1, 1)
+
+	return tr
+}
+
+fn (e: ^enm) handle*(mage: entity.ent): bool {
+	tr := false
+	e.ent.image = e.anim^[(round(real(global.t)/250) % len(e.anim^))]
+
+	if mage.p.x < e.ent.p.x {
+		e.anim = &enmleft
+	} else {
+		e.anim = &enmright
+	}
+
+
+	if mage.p.x == 0 {
+		mage.p.x = 1
+	}
+
+	if mage.p.y == 0 {
+		mage.p.y = 1
+	}
+
+	if global.getdist(e.ent.p.x, e.ent.p.y, mage.p.x, mage.p.y) < 200 && global.t - e.lastshot >= e.shootspeed {
+		tr = true
+		e.prj = e.shoot(mage.p.x, mage.p.y)
+
+		e.lastshot = global.t
+	}
+
+	e.ent.draw(global.cam)
+
+	return tr
+}
+
