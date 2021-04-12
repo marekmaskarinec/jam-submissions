@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://etc/platform.tres" type="TileSet" id=1]
+[ext_resource path="res://scenes/entity/enemy/enemy.tscn" type="PackedScene" id=2]
+
+[node name="test" type="Node2D"]
+
+[node name="enemy" parent="." instance=ExtResource( 2 )]
+position = Vector2( 422.108, 220.245 )
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = ExtResource( 1 )
+format = 1
+tile_data = PoolIntArray( 262149, 1, 0, 262150, 1, 1, 262151, 1, 1, 262152, 1, 1, 262153, 1, 1, 262154, 1, 2, 327685, 1, 65536, 327686, 1, 65537, 327687, 1, 65537, 327688, 1, 65537, 327689, 1, 65537, 327690, 1, 65538, 393220, 1, 0, 393221, 1, 327681, 393222, 1, 65537, 393223, 1, 65537, 393224, 1, 65537, 393225, 1, 65537, 393226, 1, 327680, 393227, 1, 2, 458755, 1, 196608, 458756, 1, 65542, 458757, 1, 131073, 458758, 1, 131073, 458759, 1, 131073, 458760, 1, 131073, 458761, 1, 131073, 458762, 1, 131073, 458763, 1, 65541, 458764, 1, 196610 )
