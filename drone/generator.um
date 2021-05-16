@@ -1,0 +1,113 @@
+
+import (
+	"std.um"
+	"tophat.um"
+	"entity.um"
+	"vec.um"
+	"polygon.um"
+	"global.um"
+)
+
+type line* = struct {
+	x1, y1, x2, y2: int32
+}
+
+type wall* = struct {
+	ents: []entity.ent
+	rocks: []entity.ent
+	lines: []line
+	dir: int
+	color: uint32
+	off: int32
+}
+
+var (
+	maxrot*: int
+	maxlen*: int
+)
+
+fn (w: ^wall) genline(last: line): line {
+	out := line{x1: last.x2, y1: last.y2}
+	rot := std.rand() % maxrot - maxrot/2
+	lenght := std.rand() % maxlen + maxlen/2
+
+	//x2, y2 := vec.rotatepoint(out.x1, out.y1-lenght, out.x1, out.y1, rot)
+	out.x2 = rot
+	out.y2 = out.y1-lenght
+	return out
+}
+
+fn linestopolys(inp: []line, dir: int, off: int32): []polygon.poly {
+	out := make([]polygon.poly, len(inp))
+
+	thickness := 80
+	for i:=0; i < len(inp); i++ {
+		l := inp[i]
+		out[i] = polygon.mk(l.x2+thickness*dir+off, l.y2, []int32{0, 0, -thickness*dir, 0, l.x1-l.x2-thickness*dir, l.y1-l.y2, l.x1+thickness*dir-l.x2-thickness*dir, l.y1-l.y2})
+	}
+
+	return out
+}
+
+fn getngon*(diameter: real, vcount: int): polygon.poly {
+	angle := 360.0 / vcount
+
+	verts := make([]int32, vcount * 2)
+
+	for i:=0.0; i < 360; i += angle {
+		x, y := vec.rotatepoint(0, -diameter, 0, 0, i)
+		verts[round(i/angle*2)] = round(x + diameter)
+		verts[round(i/angle*2) + 1] = round(y + diameter)
+	}
+
+	return polygon.mk(0, 0, verts)
+}
+
+fn (w: ^wall) genrock(px, py: int32): entity.ent {
+	out := entity.mk(getngon(std.rand()%4+4, std.rand()%8+2), w.color, 0)
+	out.p.x = px
+	out.p.y = py
+	out.setrot(std.rand()%360)
+	return out
+}
+
+fn mkwall*(color: uint32, dir: int, off: int32): wall {
+	return wall{[]entity.ent{}, []entity.ent{}, []line{}, dir, color, off}
+}
+
+fn (w: ^wall) update*(bot: int32, top: int32) {
+	if len(w.lines) == 0 {
+		w.lines = []line{line{0, 100, 0, -20}}
+		w.rocks = []entity.ent{w.genrock(std.rand()%20, std.rand()%20)}
+	}
+
+	if w.lines[0].y2 > bot && len(w.lines) > 1 {
+		w.lines = delete(w.lines, 0)
+		w.rocks = delete(w.rocks, 0)
+	}
+
+	for w.lines[len(w.lines)-1].y2 > top {
+		w.lines = append(w.lines, w.genline(w.lines[len(w.lines)-1]))
+		ll := w.lines[len(w.lines)-1]
+		rx := std.rand() % 40*w.dir*-1 + w.off
+		ry := std.rand() % maxlen + ll.y1 - maxlen
+		w.rocks = append(w.rocks, w.genrock(rx, ry))
+	}
+
+	polys := linestopolys(w.lines, w.dir, w.off)
+	w.ents = make([]entity.ent, len(polys))
+	for i, p in polys {
+		w.ents[i] = entity.mk(p, w.color, 0)
+		w.ents[i].draw(global.cam)
+		w.rocks[i].draw(global.cam)
+	}
+}
+
+fn (w: ^wall) getscn(): []^entity.ent {
+	out := make([]^entity.ent, len(w.ents) * 2)
+	for i:=0; i < len(w.ents)*2; i+=2 {
+		out[i] = &w.ents[i/2]
+		out[i+1] = &w.rocks[i/2]
+	}
+	return out
+}

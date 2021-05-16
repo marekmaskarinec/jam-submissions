@@ -1,0 +1,41 @@
+
+import (
+	"entity.um"
+	"polygon.um"
+	"tophat.um"
+	"input.um"
+	"global.um"
+)
+
+var (
+	ent*: entity.ent
+)
+
+fn init*() {
+	ent = entity.mk(polygon.mk(0, 0, []int32{0, 0, 4, 0, 4, 4, 0, 4}), tophat.black, -1)
+}
+
+fn handle*(scn: []^entity.ent) {
+	ent.p.y -= global.speed * tophat.delta
+	global.cam.y = round(ent.p.y)
+
+	if input.ispressed(input.KEY_A) {
+		ent.p.x -= 0.05 * tophat.delta
+	}
+
+	if input.ispressed(input.KEY_D) {
+		ent.p.x += 0.05 * tophat.delta
+	}
+
+	coll := ent.getcoll(scn)
+	ent.color = coll | 0xff
+	ent.draw(global.cam)
+
+	for i:=0; i < len(scn); i++ {
+		if scn[i].id == coll {
+			scn[i].color = coll | 0xff
+			break
+		}
+		scn[i].color = 0xff
+	}
+}

@@ -1,0 +1,32 @@
+
+import (
+	"generator.um"
+	"global.um"
+	"tophat.um"
+	"input.um"
+	"entity.um"
+	"drone.um"
+)
+
+var (
+	wall1: generator.wall
+	wall2: generator.wall
+)
+
+fn init*() {
+	wall1 = generator.mkwall(tophat.black, -1, -50)
+	wall2 = generator.mkwall(tophat.black, 1, 50)
+	generator.maxrot = 30
+	generator.maxlen = 50
+
+	drone.init()
+	global.speed = 0.1
+}
+
+fn run*() {
+	wall1.update(global.cam.y+54, global.cam.y-54)
+	wall2.update(global.cam.y+54, global.cam.y-54)
+	scn := wall1.getscn()
+	scn = append(scn, wall2.getscn())
+	drone.handle(scn)
+}
