@@ -1,1 +1,1 @@
-..\bin\tophat-win.exe
+..\..\bin\tophat-win.exe

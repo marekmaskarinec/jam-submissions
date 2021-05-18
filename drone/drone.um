@@ -4,15 +4,19 @@ import (
 	"polygon.um"
 	"tophat.um"
 	"input.um"
+	"raycast.um"
+
 	"global.um"
 )
 
 var (
 	ent*: entity.ent
+	rock_checker: raycast.ray
 )
 
 fn init*() {
 	ent = entity.mk(polygon.mk(0, 0, []int32{0, 0, 4, 0, 4, 4, 0, 4}), tophat.black, -1)
+	rock_checker = raycast.mk(0, 0, 80, 180)
 }
 
 fn handle*(scn: []^entity.ent) {
@@ -29,7 +33,6 @@ fn handle*(scn: []^entity.ent) {
 
 	coll := ent.getcoll(scn)
 	ent.color = coll | 0xff
-	ent.draw(global.cam)
 
 	for i:=0; i < len(scn); i++ {
 		if scn[i].id == coll {
@@ -38,4 +41,12 @@ fn handle*(scn: []^entity.ent) {
 		}
 		scn[i].color = 0xff
 	}
+
+	rock_checker.x = ent.p.x
+	rock_checker.y = ent.p.y
+	if rock_checker.getcoll(scn) != 0 {
+		ent.color = tophat.yellow
+	}
+
+	ent.draw(global.cam)
 }

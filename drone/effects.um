@@ -1,0 +1,18 @@
+
+var (
+	signala: uint
+	signaltween*: tween.twn
+)
+
+fn init*() {
+	signaltween = tween.mk(&signala, 0xff, 0.5)
+}
+
+fn dosignal*() {
+
+
+}
+
+fn signaldraw*() {
+
+}
