@@ -2,7 +2,9 @@
 import (
 	"entity.um"
 	"polygon.um"
+	"input.um"
 	"tophat.um"
+	"misc.um"
 
 	"level.um"
 	"global.um"
@@ -21,27 +23,30 @@ fn init*() {
 }
 
 fn handle*() {
-
-	oldpos := ent.p.y
 	ent.p.y += my * tophat.delta
+//	ent.p.x, ent.p.y = input.getglobalmousepos(global.cam)
 	var cx, cy: int32
 	coll := level.tmap.getcoll(ent, &cx, &cy)
-	printf("%s\n", repr(coll))
 	if coll {
-		//ent.p.y -= my * tophat.delta
-		/*if cy <= ent.p.y && my < 0 {
-			my = gscale * tophat.delta * 4 // this hopefully creates a bounce effect
-			ent.p.y -= my * tophat.delta
-		}*/
 
+		if cy >= ent.p.x + ent.p.h && mx >= 0 {
 			mx = 0
-			ent.p.y = cy - ent.p.h
-			//ent.p.y = oldpos
+			//ent.p.y = cy - cy%level.tmap.cellsize// - ent.p.h
+			abscy := (cy - level.tmap.y)
+			ent.p.y = abscy - abscy%level.tmap.cellsize + level.tmap.y - ent.p.h
+		}
+	}
+
+	if input.isjustpressed(input.KEY_SPACE) {
+		my -= 0.008 * tophat.delta
 	}
 
 	if my < maxy {
 		my += gscale
 	}
+
+
+	ent.color = tophat.cyan * int(level.tmap.getcoll(ent, &cx, &cy)) | 0xff
 
 	ent.draw(global.cam)
 }
