@@ -13,24 +13,24 @@ import (
 var (
 	ent: entity.ent
 	mx, my: real
-	maxy: real = 4
+	maxy: real = 0.2
 	gscale: real = 0.001
 	canjump: bool = false
 )
 
 fn init*() {
-	ent = entity.mk(polygon.mk(0, 0, []int32{0, 0, 5, 0, 5, 10, 0, 10}), tophat.cyan, -1)
+	ent = entity.mk(polygon.mk(60, 30, []int32{0, 0, 5, 0, 5, 10, 0, 10}), tophat.cyan, -1)
 }
 
 fn handle*() {
 	ent.p.y += my * tophat.delta
-//	ent.p.x, ent.p.y = input.getglobalmousepos(global.cam)
+	//ent.p.x, ent.p.y = input.getglobalmousepos(global.cam)
 	var cx, cy: int32
 	coll := level.tmap.getcoll(ent, &cx, &cy)
 	if coll {
+		my = 0
 
-		if cy >= ent.p.x + ent.p.h && mx >= 0 {
-			mx = 0
+		if cy >= ent.p.y + ent.p.h && my >= 0 {
 			//ent.p.y = cy - cy%level.tmap.cellsize// - ent.p.h
 			abscy := (cy - level.tmap.y)
 			ent.p.y = abscy - abscy%level.tmap.cellsize + level.tmap.y - ent.p.h
@@ -38,7 +38,7 @@ fn handle*() {
 	}
 
 	if input.isjustpressed(input.KEY_SPACE) {
-		my -= 0.008 * tophat.delta
+		my -= 0.003 * tophat.delta
 	}
 
 	if my < maxy {
