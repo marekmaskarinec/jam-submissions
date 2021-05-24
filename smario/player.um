@@ -1,0 +1,47 @@
+
+import (
+	"entity.um"
+	"polygon.um"
+	"tophat.um"
+
+	"level.um"
+	"global.um"
+)
+
+var (
+	ent: entity.ent
+	mx, my: real
+	maxy: real = 4
+	gscale: real = 0.001
+	canjump: bool = false
+)
+
+fn init*() {
+	ent = entity.mk(polygon.mk(0, 0, []int32{0, 0, 5, 0, 5, 10, 0, 10}), tophat.cyan, -1)
+}
+
+fn handle*() {
+
+	oldpos := ent.p.y
+	ent.p.y += my * tophat.delta
+	var cx, cy: int32
+	coll := level.tmap.getcoll(ent, &cx, &cy)
+	printf("%s\n", repr(coll))
+	if coll {
+		//ent.p.y -= my * tophat.delta
+		/*if cy <= ent.p.y && my < 0 {
+			my = gscale * tophat.delta * 4 // this hopefully creates a bounce effect
+			ent.p.y -= my * tophat.delta
+		}*/
+
+			mx = 0
+			ent.p.y = cy - ent.p.h
+			//ent.p.y = oldpos
+	}
+
+	if my < maxy {
+		my += gscale
+	}
+
+	ent.draw(global.cam)
+}

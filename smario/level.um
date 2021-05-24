@@ -1,0 +1,16 @@
+
+import (
+	"std.um"
+	"tilemap.um"
+	"image.um"
+
+	"global.um"
+)
+
+var (
+	tmap*: tilemap.tmap
+)
+
+fn init*() {
+	tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{image.load("gfx/test-tile.png")})
+}

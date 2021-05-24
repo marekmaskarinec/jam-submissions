@@ -1,0 +1,30 @@
+
+import (
+	"rectangle.um"
+	"std.um"
+)
+
+const (
+	NONE* = -1
+)
+
+var (
+	scene*: int
+	w*, h*: int32
+	cam*: rectangle.rect
+)
+
+fn readall*(path: str): str {
+		f := std.fopen(path, "r")
+    const blockSize = 32
+    res := ""
+
+    for ok := true; ok {
+	    var buff: [blockSize + 1]char
+	    ok = std.fread(f, ^[blockSize]char(&buff)) == 1
+	    res += str([]char(buff))
+    }
+
+    return res
+}
+
