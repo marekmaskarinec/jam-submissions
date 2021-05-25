@@ -13,4 +13,5 @@ fn init*() {
 fn run*() {
 	level.tmap.draw(global.cam)
 	player.handle()
+	level.run()
 }

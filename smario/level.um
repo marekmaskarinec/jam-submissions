@@ -3,14 +3,23 @@ import (
 	"std.um"
 	"tilemap.um"
 	"image.um"
+	"input.um"
 
 	"global.um"
 )
 
 var (
 	tmap*: tilemap.tmap
+	tile: image.img
 )
 
 fn init*() {
-	tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{image.load("gfx/test-tile.png")})
+	//tile = image.load("gfx/test-tile.png")
+	tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{tile})
+}
+
+fn run*() {
+	if input.isjustpressed(input.KEY_ENTER) {
+		tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{tile})
+	}
 }

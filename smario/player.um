@@ -23,30 +23,59 @@ fn init*() {
 }
 
 fn handle*() {
-	ent.p.y += my * tophat.delta
 	//ent.p.x, ent.p.y = input.getglobalmousepos(global.cam)
 	var cx, cy: int32
-	coll := level.tmap.getcoll(ent, &cx, &cy)
-	if coll {
-		my = 0
+	ent.color = tophat.cyan * int(level.tmap.getcoll(ent, &cx, &cy)) | 0xff
 
-		if cy >= ent.p.y + ent.p.h && my >= 0 {
-			//ent.p.y = cy - cy%level.tmap.cellsize// - ent.p.h
-			abscy := (cy - level.tmap.y)
-			ent.p.y = abscy - abscy%level.tmap.cellsize + level.tmap.y - ent.p.h
+	moved := false
+	if input.ispressed(input.KEY_A) {
+		moved = true
+		ent.p.x -= 0.02 * tophat.delta
+	}
+	if input.ispressed(input.KEY_D) {
+		moved = true
+		ent.p.x += 0.02 * tophat.delta
+	}
+
+	if moved {
+		coll := level.tmap.getcoll(ent, &cx, &cy)
+		if coll && cy == round(ent.p.y) {
+			canjump = true
+			right := false
+			if cx != round(ent.p.x) {
+				right = true
+			}
+
+			ent.p.x = (cx/level.tmap.cellsize + 1) * level.tmap.cellsize
+
+			if right {
+				ent.p.x -= (ent.p.w + level.tmap.cellsize + 1)
+			}
 		}
 	}
 
-	if input.isjustpressed(input.KEY_SPACE) {
-		my -= 0.003 * tophat.delta
+	ent.p.y += my * tophat.delta
+
+	coll := level.tmap.getcoll(ent, &cx, &cy)
+	if coll {
+		my = 0
+		if cy >= ent.p.y + ent.p.h {
+			abscy := (cy - level.tmap.y)
+			ent.p.y = abscy - abscy%level.tmap.cellsize + level.tmap.y - ent.p.h
+			canjump = true
+		}
+	}
+
+	if canjump && input.isjustpressed(input.KEY_SPACE) {
+		my = -0.003 * tophat.delta
+		ent.p.y -= 1
+		canjump = false
 	}
 
 	if my < maxy {
 		my += gscale
 	}
 
-
-	ent.color = tophat.cyan * int(level.tmap.getcoll(ent, &cx, &cy)) | 0xff
 
 	ent.draw(global.cam)
 }
