@@ -12,4 +12,5 @@ var (
 	w*, h*: int32
 	cam*: rectangle.rect
 	speed*: real
+	t*: int
 )

@@ -1,11 +1,13 @@
 
 import (
-	"generator.um"
-	"global.um"
 	"tophat.um"
 	"input.um"
 	"entity.um"
+
 	"drone.um"
+	"generator.um"
+	"effects.um"
+	"global.um"
 )
 
 var (

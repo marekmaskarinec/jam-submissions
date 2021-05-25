@@ -17,6 +17,7 @@ fn main() {
 
 	for true {
 		tophat.cycle(&global.w, &global.h, 0x999999ff, global.cam)
+		global.t += tophat.delta
 
 		game.run()
 

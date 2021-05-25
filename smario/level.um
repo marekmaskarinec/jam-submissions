@@ -14,7 +14,7 @@ var (
 )
 
 fn init*() {
-	//tile = image.load("gfx/test-tile.png")
+	tile = image.load("gfx/test-tile.png")
 	tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{tile})
 }
 

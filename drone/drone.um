@@ -7,6 +7,7 @@ import (
 	"raycast.um"
 
 	"global.um"
+	"effects.um"
 )
 
 var (
@@ -46,6 +47,9 @@ fn handle*(scn: []^entity.ent) {
 	rock_checker.y = ent.p.y
 	if rock_checker.getcoll(scn) != 0 {
 		ent.color = tophat.yellow
+		effects.signaldraw()
+	} else {
+		effects.signala = 0
 	}
 
 	ent.draw(global.cam)
