@@ -1,17 +1,26 @@
 
 import (
 	"global.um"
+	"goomba.um"
 	"level.um"
 	"player.um"
+)
+
+var (
+	g: goomba.gba
 )
 
 fn init*() {
 	level.init()
 	player.init()
+	goomba.init()
+	g = goomba.spawn(22, 0)
 }
 
 fn run*() {
 	level.tmap.draw(global.cam)
 	player.handle()
 	level.run()
+	g.handle()
+	g.draw()
 }

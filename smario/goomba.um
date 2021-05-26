@@ -1,0 +1,64 @@
+
+import (
+	"entity.um"
+	"image.um"
+	"tophat.um"
+	"polygon.um"
+	"misc.um"
+
+	"global.um"
+	"level.um"
+)
+
+var (
+	speed*: real
+)
+
+type gba* = struct {
+	ent: entity.ent
+	floordet: entity.ent
+	walldet: entity.ent
+	dead: bool
+	dir: int
+	anim: ^[]image.img
+}
+
+fn init*() {
+	speed = 0.02
+}
+
+fn spawn*(x, y: int): gba {
+	y = round(misc.stepify(y, level.tmap.cellsize))
+	y += (level.tmap.cellsize - 4)
+	out := gba{}
+	out.ent = entity.mk(polygon.mk(x, y, []int32{0, 0, 4, 0, 4, 4, 0, 4}), 0xff, 0)
+	out.floordet = entity.mk(polygon.mk(x, y+4, []int32{0, 0, 2, 0, 2, 8, 0, 8}), tophat.yellow, 0)
+	out.walldet = entity.mk(polygon.mk(x, y, []int32{0, 0, 1, 0, 1, 1, 0, 1}), tophat.yellow, 0)
+	out.dir = -1
+	return out
+}
+
+fn (g: ^gba) handle*() {
+	g.ent.p.x += g.dir * speed * tophat.delta
+	g.floordet.p.x = g.ent.p.x
+	g.walldet.p.x = g.ent.p.x
+	if g.dir == 1 {
+		g.walldet.p.x += g.ent.p.w
+		g.floordet.p.x += g.ent.p.w
+	}
+	var trash: int32
+	if !level.tmap.getcoll(g.floordet, &trash, &trash, &trash, &trash) || level.tmap.getcoll(g.walldet, &trash, &trash, &trash, &trash) {
+		g.dir *= -1
+		g.floordet.p.x = g.ent.p.x
+		if g.dir == 1 {
+			g.floordet.p.x += g.ent.p.w
+			g.walldet.p.x += g.ent.p.w
+		}
+	}
+}
+
+fn (g: ^gba) draw*() {
+	g.ent.draw(global.cam)
+	g.floordet.draw(global.cam)
+	g.walldet.draw(global.cam)
+}
