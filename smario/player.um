@@ -12,17 +12,21 @@ import (
 
 var (
 	ent: entity.ent
+	feet: entity.ent
 	mx, my: real
 	maxy: real = 0.2
-	gscale: real = 0.001
+	gscale: real = 0.002
 	canjump: bool = false
 )
 
 fn init*() {
 	ent = entity.mk(polygon.mk(60, 30, []int32{0, 0, 5, 0, 5, 10, 0, 10}), tophat.cyan, -1)
+	feet = entity.mk(polygon.mk(60, 40, []int32{0, 0, 5, 0, 5, 1, 0, 1}), tophat.yellow, -2)
 }
 
-fn handle*() {
+fn handle*(scn: []^entity.ent) {
+	/////////////////////////////
+	// world collisions
 	//ent.p.x, ent.p.y = input.getglobalmousepos(global.cam)
 	var cx, cy, tx, ty: int32
 	ent.color = tophat.cyan * int(level.tmap.getcoll(ent, &cx, &cy, &tx, &ty)) | 0xff
@@ -30,11 +34,11 @@ fn handle*() {
 	moved := false
 	if input.ispressed(input.KEY_A) {
 		moved = true
-		ent.p.x -= 0.04 * tophat.delta
+		ent.p.x -= 0.06 * tophat.delta
 	}
 	if input.ispressed(input.KEY_D) {
 		moved = true
-		ent.p.x += 0.04 * tophat.delta
+		ent.p.x += 0.06 * tophat.delta
 	}
 
 	if moved {
@@ -60,6 +64,10 @@ fn handle*() {
 		}
 	}
 
+	if input.isjustpressed(input.KEY_S) {
+		my += gscale * 100
+	}
+
 	ent.p.y += my * tophat.delta
 
 	coll := level.tmap.getcoll(ent, &cx, &cy, &tx, &ty)
@@ -81,7 +89,7 @@ fn handle*() {
 	}
 
 	if canjump && input.isjustpressed(input.KEY_SPACE) {
-		my = -0.003 * tophat.delta
+		my = -0.004 * tophat.delta
 		ent.p.y -= 1
 		canjump = false
 	}
@@ -90,6 +98,17 @@ fn handle*() {
 		my += gscale
 	}
 
+	feet.p.x = ent.p.x
+	feet.p.y = ent.p.y + ent.p.h + 1
+
+	/////////////////////////////
+	// goomba handling
+	if bool(feet.getcoll(scn)) {
+		printf("goomba dead\n")
+	} else if bool(ent.getcoll(scn)) {
+		printf("dead\n")
+	}
 
 	ent.draw(global.cam)
+	feet.draw(global.cam)
 }

@@ -1,5 +1,7 @@
 
 import (
+	"entity.um"
+
 	"global.um"
 	"goomba.um"
 	"level.um"
@@ -19,7 +21,7 @@ fn init*() {
 
 fn run*() {
 	level.tmap.draw(global.cam)
-	player.handle()
+	player.handle([]^entity.ent{&g.ent})
 	level.run()
 	g.handle()
 	g.draw()

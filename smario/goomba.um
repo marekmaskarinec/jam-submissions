@@ -40,7 +40,7 @@ fn spawn*(x, y: int): gba {
 
 fn (g: ^gba) handle*() {
 	g.ent.p.x += g.dir * speed * tophat.delta
-	g.floordet.p.x = g.ent.p.x
+	g.floordet.p.x = g.ent.p.x - 1
 	g.walldet.p.x = g.ent.p.x
 	if g.dir == 1 {
 		g.walldet.p.x += g.ent.p.w
@@ -49,7 +49,7 @@ fn (g: ^gba) handle*() {
 	var trash: int32
 	if !level.tmap.getcoll(g.floordet, &trash, &trash, &trash, &trash) || level.tmap.getcoll(g.walldet, &trash, &trash, &trash, &trash) {
 		g.dir *= -1
-		g.floordet.p.x = g.ent.p.x
+		g.floordet.p.x = g.ent.p.x - 1
 		if g.dir == 1 {
 			g.floordet.p.x += g.ent.p.w
 			g.walldet.p.x += g.ent.p.w
