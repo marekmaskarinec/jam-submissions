@@ -41,7 +41,8 @@ fn handle*() {
 		coll := level.tmap.getcoll(ent, &cx, &cy, &tx, &ty)
 		ctx := round((ent.p.x - level.tmap.x) / level.tmap.cellsize)
 		cty := round((ent.p.y - level.tmap.y) / level.tmap.cellsize)
-		if coll && (cy == round(ent.p.y) || ty == cty) {
+		fty := round((ent.p.y + ent.p.h - level.tmap.y - 1) / level.tmap.cellsize)
+		if coll && (cy == round(ent.p.y) || ty == cty || cty + 1 != fty) {
 			canjump = true
 			right := false
 			if cx != round(ent.p.x) {
@@ -64,10 +65,15 @@ fn handle*() {
 	coll := level.tmap.getcoll(ent, &cx, &cy, &tx, &ty)
 	if coll {
 		my = 0
-		//printf("%d %f\n", ty * level.tmap.cellsize + level.tmap.y, ent.p.y + ent.p.h)
+
+		if cy == round(ent.p.y) {
+			my = gscale*4
+			ent.p.y += gscale * tophat.delta * 80 // this is really hacky, but it does the job
+		}
+
 		ctx := round((ent.p.x - level.tmap.x) / level.tmap.cellsize)
 		cty := round((ent.p.y - level.tmap.y) / level.tmap.cellsize)
-		if cy >= ent.p.y + ent.p.h && cty < ty {
+		if cy >= round(ent.p.y) + ent.p.h && cty < ty {
 			abscy := (cy - level.tmap.y)
 			ent.p.y = abscy - abscy%level.tmap.cellsize + level.tmap.y - ent.p.h
 			canjump = true
