@@ -4,14 +4,13 @@ import (
 	"image.um"
 	"tophat.um"
 	"polygon.um"
+	"animation.um"
 	"misc.um"
+	"std.um"
 
 	"global.um"
 	"level.um"
-)
-
-var (
-	speed*: real
+	"effects.um"
 )
 
 type gba* = struct {
@@ -23,22 +22,47 @@ type gba* = struct {
 	anim: ^[]image.img
 }
 
+var (
+	speed*: real
+	spawns*: []int32
+	goombas*: []gba
+	maxgbas*: int
+
+	walkanimleft: []image.img
+	walkanimright: []image.img
+	dieanim: []image.img
+)
+
 fn init*() {
 	speed = 0.02
+	maxgbas = 2
+	spawns = level.findspawns()
+	goombas = []gba{}
+
+	img := image.load("gfx/goomba-walk.png")
+	walkanimleft = global.smaptoanim(img, 2)
+	walkanimright = global.flipvanim(walkanimleft)
+	img.delete()
+
+	img = image.load("gfx/goomba-dissolve.png")
+	dieanim = global.smaptoanim(img, 5)
+	img.delete()
 }
 
 fn spawn*(x, y: int): gba {
 	y = round(misc.stepify(y, level.tmap.cellsize))
-	y += (level.tmap.cellsize - 4)
+	y += (level.tmap.cellsize - 6)
 	out := gba{}
-	out.ent = entity.mk(polygon.mk(x, y, []int32{0, 0, 4, 0, 4, 4, 0, 4}), 0xff, 0)
+	out.ent = entity.mk(polygon.mk(x, y, []int32{0, 0, 6, 0, 6, 6, 0, 6}), 0xff, 0)
 	out.floordet = entity.mk(polygon.mk(x, y+4, []int32{0, 0, 2, 0, 2, 8, 0, 8}), tophat.yellow, 0)
 	out.walldet = entity.mk(polygon.mk(x, y, []int32{0, 0, 1, 0, 1, 1, 0, 1}), tophat.yellow, 0)
 	out.dir = -1
+	out.anim = &walkanimleft
 	return out
 }
 
 fn (g: ^gba) handle*() {
+	g.ent.animate(3, g.anim)
 	g.ent.p.x += g.dir * speed * tophat.delta
 	g.floordet.p.x = g.ent.p.x - 1
 	g.walldet.p.x = g.ent.p.x
@@ -50,15 +74,48 @@ fn (g: ^gba) handle*() {
 	if !level.tmap.getcoll(g.floordet, &trash, &trash, &trash, &trash) || level.tmap.getcoll(g.walldet, &trash, &trash, &trash, &trash) {
 		g.dir *= -1
 		g.floordet.p.x = g.ent.p.x - 1
+		g.anim = &walkanimleft
 		if g.dir == 1 {
 			g.floordet.p.x += g.ent.p.w
 			g.walldet.p.x += g.ent.p.w
+			g.anim = &walkanimright
 		}
 	}
 }
 
 fn (g: ^gba) draw*() {
 	g.ent.draw(global.cam)
-	g.floordet.draw(global.cam)
-	g.walldet.draw(global.cam)
+	//g.floordet.draw(global.cam)
+	//g.walldet.draw(global.cam)
+}
+
+fn handleall*(): []^entity.ent {
+	todel := []int{}
+	for i:=0; i < len(goombas); i++ {
+		if goombas[i].dead {
+			ca := len(effects.anims)
+			effects.anims = append(effects.anims, animation.mk(round(goombas[i].ent.p.x), round(goombas[i].ent.p.y), dieanim, 6))
+			effects.anims[ca].start(tophat.t)
+			todel = append(todel, i)
+			continue
+		}
+		goombas[i].handle()
+		goombas[i].draw()
+	}
+
+	for i:=0; i < len(todel); i++ {
+		goombas = delete(goombas, todel[i] - i)
+	}
+
+	for len(goombas) < maxgbas {
+		rand := std.rand()%(len(spawns)/2)
+		std.rand() // wtf is this? o.O
+		goombas = append(goombas, spawn(spawns[rand*2], spawns[rand*2+1]))
+	}
+
+	out := make([]^entity.ent, len(goombas))
+	for i:=0; i < len(goombas); i++ {
+		out[i] = &goombas[i].ent
+	}
+	return out
 }

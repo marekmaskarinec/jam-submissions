@@ -10,16 +10,26 @@ import (
 
 var (
 	tmap*: tilemap.tmap
-	tile: image.img
+	tiles: []image.img
 )
 
 fn init*() {
-	tile = image.load("gfx/test-tile.png")
-	tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{tile})
+	tiles = []image.img{image.load("gfx/test-tile.png"), image.load("gfx/blank-tile.png")}
+	tmap = tilemap.mk(global.readall("levels/test.csv"), tiles)
+}
+
+fn findspawns*(): []int32 {
+	out := []int32{}
+	for i:=0; i < len(tmap.cells); i++ {
+		if tmap.cells[i] == 2 {
+			out = append(out, []int32{(i % tmap.w) * tmap.cellsize + tmap.x, (i/tmap.w)*tmap.cellsize + tmap.y})
+		}
+	}
+	return out
 }
 
 fn run*() {
 	if input.isjustpressed(input.KEY_ENTER) {
-		tmap = tilemap.mk(global.readall("levels/test.csv"), []image.img{tile})
+		tmap = tilemap.mk(global.readall("levels/test.csv"), tiles)
 	}
 }

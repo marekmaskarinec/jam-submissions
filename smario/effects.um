@@ -1,0 +1,28 @@
+
+import (
+	"animation.um"
+	"tophat.um"
+
+	"global.um"
+)
+
+var (
+	anims*: []animation.anim
+)
+
+fn init*() {
+	anims = []animation.anim{}
+}
+
+fn handle*() {
+	todel := []int{}
+	for i:=0; i < len(anims); i++ {
+		if anims[i].handle(tophat.t, global.cam) {
+			todel = append(todel, i)
+		}
+	}
+
+	for i:=0; i < len(todel); i++ {
+		anims = delete(anims, todel[i] - i)
+	}
+}

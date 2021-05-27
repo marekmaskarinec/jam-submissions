@@ -6,23 +6,19 @@ import (
 	"goomba.um"
 	"level.um"
 	"player.um"
-)
-
-var (
-	g: goomba.gba
+	"effects.um"
 )
 
 fn init*() {
 	level.init()
 	player.init()
 	goomba.init()
-	g = goomba.spawn(22, 0)
+	effects.init()
 }
 
 fn run*() {
 	level.tmap.draw(global.cam)
-	player.handle([]^entity.ent{&g.ent})
+	player.handle(goomba.handleall())
 	level.run()
-	g.handle()
-	g.draw()
+	effects.handle()
 }

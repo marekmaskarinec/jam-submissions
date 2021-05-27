@@ -3,6 +3,7 @@ import (
 	"tophat/tophat.um"
 	"tophat/rawdraw.um"
 	"tophat/rectangle.um"
+	"std.um"
 
 	"global.um"
 	"game.um"
@@ -12,6 +13,8 @@ fn main() {
 	tophat.setup("title", 1280, 720)
 
 	global.cam = rectangle.mk(60, 40, 192, 108)
+
+	std.srand(std.time())
 
 	game.init()
 

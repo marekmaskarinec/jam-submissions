@@ -1,6 +1,7 @@
 
 import (
 	"rectangle.um"
+	"image.um"
 	"std.um"
 )
 
@@ -29,3 +30,27 @@ fn readall*(path: str): str {
   return res
 }
 
+
+fn smaptoanim*(inp: image.img, count: int): []image.img {
+	out := make([]image.img, count)
+
+	w, h := inp.getdims()
+	w = w / count
+
+	for i:=0; i < count; i++ {
+		out[i] = inp.copy()
+		out[i].crop(w * i, 0, w * i + w, h)
+	}
+
+	return out
+}
+
+fn flipvanim*(inp: []image.img): []image.img {
+	out := make([]image.img, len(inp))
+
+	for i:=0; i < len(inp); i++ {
+		out[i] = inp[i].copy()
+		out[i].flipv()
+	}
+	return out
+}

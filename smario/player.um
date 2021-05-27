@@ -8,6 +8,7 @@ import (
 
 	"level.um"
 	"global.um"
+	"goomba.um" // this shouldn't be done
 )
 
 var (
@@ -21,7 +22,7 @@ var (
 
 fn init*() {
 	ent = entity.mk(polygon.mk(60, 30, []int32{0, 0, 5, 0, 5, 10, 0, 10}), tophat.cyan, -1)
-	feet = entity.mk(polygon.mk(60, 40, []int32{0, 0, 5, 0, 5, 1, 0, 1}), tophat.yellow, -2)
+	feet = entity.mk(polygon.mk(60, 40, []int32{0, 0, 3, 0, 3, 1, 0, 1}), tophat.yellow, -2)
 }
 
 fn handle*(scn: []^entity.ent) {
@@ -98,17 +99,23 @@ fn handle*(scn: []^entity.ent) {
 		my += gscale
 	}
 
-	feet.p.x = ent.p.x
+	feet.p.x = ent.p.x + 1
 	feet.p.y = ent.p.y + ent.p.h + 1
 
 	/////////////////////////////
 	// goomba handling
-	if bool(feet.getcoll(scn)) {
-		printf("goomba dead\n")
+	if coll := feet.getcoll(scn); bool(coll) && my > 0 {
+		for i:=0; i < len(scn); i++ {
+			if scn[i].id == coll {
+				goomba.goombas[i].dead = true
+			}
+		}
 	} else if bool(ent.getcoll(scn)) {
-		printf("dead\n")
+		// todo handle player hits
 	}
 
+	global.cam.x = round(ent.p.x + ent.p.w/2)
+	global.cam.y = round(ent.p.y + ent.p.h/2)
 	ent.draw(global.cam)
 	feet.draw(global.cam)
 }
