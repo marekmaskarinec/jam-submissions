@@ -35,7 +35,7 @@ var (
 
 fn init*() {
 	speed = 0.02
-	maxgbas = 2
+	maxgbas = 10
 	spawns = level.findspawns()
 	goombas = []gba{}
 

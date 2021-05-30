@@ -19,7 +19,7 @@ fn main() {
 	game.init()
 
 	for true {
-		tophat.cycle(&global.w, &global.h, 0xffffffff, global.cam)
+		tophat.cycle(&global.w, &global.h, 0xfbbbadff, global.cam)
 
 		game.run()
 

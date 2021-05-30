@@ -17,8 +17,8 @@ fn init*() {
 }
 
 fn run*() {
+	level.run()
 	level.tmap.draw(global.cam)
 	player.handle(goomba.handleall())
-	level.run()
 	effects.handle()
 }

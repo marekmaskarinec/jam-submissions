@@ -18,10 +18,11 @@ var (
 	maxy: real = 0.2
 	gscale: real = 0.002
 	canjump: bool = false
+	canfall: bool = false
 )
 
 fn init*() {
-	ent = entity.mk(polygon.mk(60, 30, []int32{0, 0, 5, 0, 5, 10, 0, 10}), tophat.cyan, -1)
+	ent = entity.mk(polygon.mk(60, 30, []int32{0, 0, 5, 0, 5, 10, 0, 10}), 0x292831ff, -1)
 	feet = entity.mk(polygon.mk(60, 40, []int32{0, 0, 3, 0, 3, 1, 0, 1}), tophat.yellow, -2)
 }
 
@@ -30,7 +31,7 @@ fn handle*(scn: []^entity.ent) {
 	// world collisions
 	//ent.p.x, ent.p.y = input.getglobalmousepos(global.cam)
 	var cx, cy, tx, ty: int32
-	ent.color = tophat.cyan * int(level.tmap.getcoll(ent, &cx, &cy, &tx, &ty)) | 0xff
+	//ent.color = tophat.cyan * int(level.tmap.getcoll(ent, &cx, &cy, &tx, &ty)) | 0xff
 
 	moved := false
 	if input.ispressed(input.KEY_A) {
@@ -60,13 +61,10 @@ fn handle*(scn: []^entity.ent) {
 				ent.p.x -= (ent.p.w + level.tmap.cellsize + 1)
 			}
 		}
-		if coll {
-			canjump = true
-		}
 	}
 
-	if input.isjustpressed(input.KEY_S) {
-		my += gscale * 100
+	if canfall && input.isjustpressed(input.KEY_S){
+		my += gscale * 50
 	}
 
 	ent.p.y += my * tophat.delta
@@ -86,13 +84,15 @@ fn handle*(scn: []^entity.ent) {
 			abscy := (cy - level.tmap.y)
 			ent.p.y = abscy - abscy%level.tmap.cellsize + level.tmap.y - ent.p.h
 			canjump = true
+			canfall = false
 		}
 	}
 
 	if canjump && input.isjustpressed(input.KEY_SPACE) {
-		my = -0.004 * tophat.delta
-		ent.p.y -= 1
+		my = -0.08
+		ent.p.y -= 0.001 * tophat.delta
 		canjump = false
+		canfall = true
 	}
 
 	if my < maxy {
@@ -116,6 +116,9 @@ fn handle*(scn: []^entity.ent) {
 
 	global.cam.x = round(ent.p.x + ent.p.w/2)
 	global.cam.y = round(ent.p.y + ent.p.h/2)
+	level.playerx = ent.p.x
+	level.playery = ent.p.y
+
 	ent.draw(global.cam)
-	feet.draw(global.cam)
+	//feet.draw(global.cam)
 }

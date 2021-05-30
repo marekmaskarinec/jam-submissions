@@ -11,11 +11,16 @@ import (
 var (
 	tmap*: tilemap.tmap
 	tiles: []image.img
+	
+	bg: image.img
+	playerx*: real
+	playery*: real
 )
 
 fn init*() {
 	tiles = []image.img{image.load("gfx/test-tile.png"), image.load("gfx/blank-tile.png")}
 	tmap = tilemap.mk(global.readall("levels/test.csv"), tiles)
+	bg = image.load("gfx/bg.png")
 }
 
 fn findspawns*(): []int32 {
@@ -29,6 +34,7 @@ fn findspawns*(): []int32 {
 }
 
 fn run*() {
+	bg.draw(round(playerx / -10), round(playery / -10) - 15, 0, 0.2)
 	if input.isjustpressed(input.KEY_ENTER) {
 		tmap = tilemap.mk(global.readall("levels/test.csv"), tiles)
 	}
