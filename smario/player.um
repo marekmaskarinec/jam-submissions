@@ -5,6 +5,7 @@ import (
 	"input.um"
 	"tophat.um"
 	"misc.um"
+	"image.um"
 
 	"level.um"
 	"global.um"
@@ -19,10 +20,18 @@ var (
 	gscale: real = 0.002
 	canjump: bool = false
 	canfall: bool = false
+
+	walkanim: []image.img
+	charimg: image.img
+	jumpimg: image.img
 )
 
 fn init*() {
 	ent = entity.mk(polygon.mk(60, 30, []int32{0, 0, 5, 0, 5, 10, 0, 10}), 0x292831ff, -1)
+	charimg = image.load("gfx/character.png")
+	walkanim = global.smaptoanim(image.load("gfx/character-walk.png"), 2)
+	jumpimg = image.load("gfx/character-jump.png")
+	
 	feet = entity.mk(polygon.mk(60, 40, []int32{0, 0, 3, 0, 3, 1, 0, 1}), tophat.yellow, -2)
 }
 
@@ -61,6 +70,13 @@ fn handle*(scn: []^entity.ent) {
 				ent.p.x -= (ent.p.w + level.tmap.cellsize + 1)
 			}
 		}
+		ent.animate(8, &walkanim)
+	} else {
+		ent.image = charimg
+	}
+
+	if !canjump {
+		ent.image = charimg
 	}
 
 	if canfall && input.isjustpressed(input.KEY_S){
@@ -114,8 +130,8 @@ fn handle*(scn: []^entity.ent) {
 		// todo handle player hits
 	}
 
-	global.cam.x = round(ent.p.x + ent.p.w/2)
-	global.cam.y = round(ent.p.y + ent.p.h/2)
+	global.cam.x += round((ent.p.x - global.cam.x) * 0.9)
+	global.cam.y += round((ent.p.y - global.cam.y) * 0.9)
 	level.playerx = ent.p.x
 	level.playery = ent.p.y
 
