@@ -1,18 +1,21 @@
 
 import (
 	"entity.um"
-	"global.um"
 	"input.um"
 	"polygon.um"
 	"rawdraw.um"
 	"tophat.um"
 	"raycast.um"
 	"vec.um"
+	"image.um"
+	"std.um"
+
+	"global.um"
 )
 
 type Player = struct {
 	ent: entity.ent
-	controls: str
+	controls: []char
 }
 
 type Obstacle = interface {
@@ -23,6 +26,7 @@ type Obstacle = interface {
 
 type Saw = struct {
 	ent: entity.ent
+	cover: entity.ent
 	speed: real
 	bound_min, bound_max: real
 	dir: int
@@ -35,17 +39,48 @@ type Log = struct {
 	dir: int
 }
 
+type Pile = struct {
+	ent: entity.ent
+}
+
 const (
 	wire_thickness = 2
+	max_obstacles = 5
+	saw_rot_speed = 2
 )
 
 var (
 	p1, p2: Player
 	w_ray: raycast.ray
 	move_speed: real
-	test_saw: Saw
-	test_log: Log
+	obstacles: []Obstacle
+
+	saw_image: image.img
+	saw_guard: image.img
+	saw_guard_cover: image.img
+
+	log_pile_image: image.img
 )
+
+fn ysort*(ents: []Obstacle): []Obstacle {
+	swapped := true
+
+	for swapped {
+		swapped = false
+
+		for i:=1; i < len(ents); i++ {
+			if ents[i-1].get_ent().p.y > ents[i].get_ent().p.y {
+				tmp := ents[i]
+				ents[i] = ents[i-1]
+				ents[i-1] = tmp
+
+				swapped = true
+			}
+		}
+	}
+
+	return ents
+}
 
 // player
 fn (p: ^Player) handle() {
@@ -79,10 +114,29 @@ fn (s: ^Saw) handle() {
 	}
 
 	s.ent.p.x += s.speed * s.dir * tophat.delta
+	s.ent.rot += saw_rot_speed * tophat.delta
+
+	s.cover.p.x = s.ent.p.x
+	//s.cover.p.y = s.ent.p.y + 10
 }
 
 fn (s: ^Saw) draw() {
+	for i:=0; i < (s.bound_max - s.bound_min) / 20 + 1; i++ {
+		x := round(s.bound_min + i * 20 - global.cam.x + global.cam.w/2)
+		y := round(s.ent.p.y - global.cam.y + global.cam.h/2)
+
+		saw_guard.draw(x, y, 0, 1)
+	}
+
 	s.ent.draw(global.cam)
+	s.cover.draw(global.cam)
+	
+	for i:=0; i < (s.bound_max - s.bound_min) / 20 + 1; i++ {
+		x := round(s.bound_min + i * 20 - global.cam.x + global.cam.w/2)
+		y := round(s.ent.p.y - global.cam.y + global.cam.h/2)
+
+		saw_guard_cover.draw(x, y, 0, 1)
+	}
 }
 
 fn (s: ^Saw) get_ent(): ^entity.ent {
@@ -91,7 +145,8 @@ fn (s: ^Saw) get_ent(): ^entity.ent {
 
 fn mk_saw(x, y, speed, min, max: real): Saw {
 	s := Saw{}
-	s.ent = entity.mk(polygon.mk(x, y, []int32{0, 0, 10, 0, 10, 10, 0, 10}), tophat.red, 0)
+	s.ent = entity.mk(polygon.mk(x, y, []int32{0, 0, 20, 0, 20, 20, 0, 20}), tophat.red, 0)
+	s.cover = entity.mk(polygon.mk(x, y+11, []int32{1, 0, 19, 0, 19, 8, 1, 8}), global.bg_color, 0)
 	s.speed = speed
 	s.bound_min = min
 	s.bound_max = max
@@ -99,6 +154,7 @@ fn mk_saw(x, y, speed, min, max: real): Saw {
 		s.ent.p.x = min + 1
 	}
 	s.dir = 1
+	s.ent.image = saw_image
 
 	return s
 }
@@ -124,48 +180,107 @@ fn mk_log(x, y, speed: real, dir: int): Log {
 	return s
 }
 
+fn (s: ^Pile) handle() { }
+fn (s: ^Pile) draw() {
+	s.ent.draw(global.cam)
+}
+
+fn (s: ^Pile) get_ent(): ^entity.ent {
+	return &s.ent
+}
+
+fn mk_pile(x, y: real): Pile {
+	s := Pile{}
+	s.ent = entity.mk(polygon.mk(x, y, []int32{0, 0, 20, 0, 20, 20, 0, 20}), tophat.red, 0)
+	s.ent.image = log_pile_image
+
+	return s
+}
+
+fn do_gen() {
+	sort := false
+	if len(obstacles) < max_obstacles {
+		sort = true
+	}
+
+	for len(obstacles) < max_obstacles {
+		r := std.rand()%3
+		std.println(repr(r))
+
+		switch r {
+		case 0:
+			obstacles = append(obstacles, mk_saw(std.rand()%global.cam.w - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20, std.frand()/12+0.01, std.rand()%global.cam.w/2 - global.cam.w/2 + 10, std.rand()%global.cam.w/2 - 10))
+		case 1:
+			obstacles = append(obstacles, mk_log(std.rand()%global.cam.w - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20, std.frand()/8+0.06, 1)) // TODO up going logs
+		case 2:
+			obstacles = append(obstacles, mk_pile(std.rand()%global.cam.w - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20))
+		}
+	}
+
+	todel := []int{}
+	for i, _ in obstacles {
+		if obstacles[i].get_ent().p.y > global.cam.y + global.cam.h/2 {
+			todel = append(todel, i)
+		}
+	}
+
+	for i:=0; i < len(todel); i++ {
+		obstacles =	delete(obstacles, todel[i] - i)
+	}
+
+	obstacles = ysort(obstacles)
+}
+
+
 fn init*() {
-	p1 = Player{entity.mk(polygon.mk(0, 0, []int32{0, 0, 10, 0, 10, 10, 0, 10}), tophat.black, -2), "wasd"}
-	p2 = Player{entity.mk(polygon.mk(20, 20, []int32{0, 0, 10, 0, 10, 10, 0, 10}), tophat.black, -3), "khjl"}
+	p1 = Player{entity.mk(polygon.mk(0, 0, []int32{0, 0, 10, 0, 10, 10, 0, 10}), tophat.black, -2), []char{'w', 'a', 's', 'd'}}
+	p2 = Player{entity.mk(polygon.mk(20, 20, []int32{0, 0, 10, 0, 10, 10, 0, 10}), tophat.black, -3), []char{char(input.ARROW_UP), char(input.ARROW_LEFT), char(input.ARROW_DOWN), char(input.ARROW_RIGHT)}}
 	move_speed = 0.2
 
 	w_ray = raycast.ray{}
 
-	test_saw = mk_saw(-10, -10, 0.05, -40, 20)
-	test_log = mk_log(0, 100, 0.06, -1)
+	obstacles = []Obstacle{}
+
+	saw_image = image.load("gfx/saw.png")
+	saw_guard = image.load("gfx/saw_guard.png")
+	saw_guard_cover = image.load("gfx/saw_guard_cover.png")
+
+	log_pile_image = image.load("gfx/log-pile.png")
 }
 
 // main loop
 fn run*() {
 	p1.handle()
 	p2.handle()
-	test_saw.handle()
-	test_log.handle()
-
 	w_ray.x = p1.ent.p.x + p1.ent.p.w/2
 	w_ray.y = p1.ent.p.y + p1.ent.p.h/2
 	w_ray.l = round(vec.distanceto(p1.ent.p.x + p1.ent.p.w/2, p1.ent.p.y + p1.ent.p.h/2, p2.ent.p.x + p2.ent.p.w/2, p2.ent.p.y + p2.ent.p.h/2))
 	w_ray.r = round(vec.angleto(p1.ent.p.x + p1.ent.p.w/2, p1.ent.p.y + p1.ent.p.h/2, p2.ent.p.x + p2.ent.p.w/2, p2.ent.p.y + p2.ent.p.h/2)) - 90
 	
-	//wire = entity.mk(polygon.mk(p1.ent.p.x, p1.ent.p.y, []int32{0, 0, round(p2.ent.p.x + p2.ent.p.w/2), round(p2.ent.p.y + p2.ent.p.h/2), round(p2.ent.p.x + p2.ent.p.w/2 + wire_thickness), round(p2.ent.p.y + p2.ent.p.h/2 + wire_thickness), wire_thickness, wire_thickness}), tophat.black, -1)
+	do_gen()
 
-	//wire.draw(global.cam)
+	scn := make([]^entity.ent, len(obstacles))
+	for i, _ in obstacles {
+		obstacles[i].handle()
+		obstacles[i].draw()
+		scn[i] = obstacles[i].get_ent()
+	}
+
+	col := tophat.black
+	if bool(p1.ent.getcoll(scn)) || bool(p2.ent.getcoll(scn)) || bool(w_ray.getcoll(scn)) {
+		col = tophat.cyan
+	}
+
+	p1.ent.color = col
+	p2.ent.color = col
+
+	if input.ispressed(input.KEY_ENTER) {
+		global.cam.y -= round(0.06 * tophat.delta)
+	}
+
 	camx := global.cam.x - global.cam.w/2
 	camy := global.cam.y - global.cam.h/2
-	rawdraw.drawline(round(p1.ent.p.x + p1.ent.p.w/2 - camx), round(p1.ent.p.y + p1.ent.p.h/2 - camy), round(p2.ent.p.x + p2.ent.p.w/2 - camx), round(p2.ent.p.y + p2.ent.p.h/2 - camy), 2, tophat.black)
-
-	scn := []^entity.ent{test_saw.get_ent()}
-
-	test_saw.ent.color = tophat.red
-	if bool(p1.ent.getcoll(scn)) || bool(p2.ent.getcoll(scn)) || bool(w_ray.getcoll(scn)) {
-		test_saw.ent.color = tophat.cyan
-	}	
-
+	rawdraw.drawline(round(p1.ent.p.x + p1.ent.p.w/2 - camx), round(p1.ent.p.y + p1.ent.p.h/2 - camy), round(p2.ent.p.x + p2.ent.p.w/2 - camx), round(p2.ent.p.y + p2.ent.p.h/2 - camy), 2, col)
 	p1.ent.draw(global.cam)
 	p2.ent.draw(global.cam)
-	test_saw.draw()
-	test_log.draw()
-
-	/*ex, ey := vec.rotatepoint(w_ray.x, w_ray.y-w_ray.l, w_ray.x, w_ray.y, w_ray.r)
-	rawdraw.drawline(round(w_ray.x-camx), round(w_ray.y-camy), round(ex-camx), round(ey-camy), 4, tophat.red)*/
 }

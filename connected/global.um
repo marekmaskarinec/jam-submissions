@@ -12,4 +12,5 @@ var (
 	scene*: int
 	w*, h*: int32
 	cam*: rectangle.rect
+	bg_color*: uint32 = 0xffffffff
 )
