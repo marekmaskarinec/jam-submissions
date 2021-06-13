@@ -9,7 +9,9 @@ import (
 	"vec.um"
 	"image.um"
 	"std.um"
+	"tween.um"
 	"rawdraw.um"
+	"audio.um"
 
 	"global.um"
 )
@@ -47,6 +49,15 @@ type Pile = struct {
 	ent: entity.ent
 }
 
+type EffectLog = struct {
+	scale: real
+	rot: real
+	px: real
+	py: real
+	tx: tween.twn
+	ty: tween.twn
+}
+
 const (
 	wire_thickness = 2
 	max_obstacles = 5
@@ -71,13 +82,16 @@ var (
 	log_normal, log_broken, log_broken_flip: []image.img
 	log_anims: []^[]image.img
 
+	log_effect: EffectLog
+	do_effect: bool
+	
 	score: int
 	dead: bool = true
 	death_msg: str = "LOGS TOGETHER"
 
-	saw_trash: []Saw
-	log_trash: []Log
-	pile_trash: []Pile
+	pickup_sound: audio.sound
+	music: audio.sound
+	die_sound: audio.sound
 )
 
 fn ysort*(ents: []Obstacle): []Obstacle {
@@ -248,11 +262,11 @@ fn do_gen() {
 
 		switch r {
 		case 0:
-			saws = append(saw_trash, mk_saw(std.rand()%global.cam.w - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20, std.frand()/12+0.01, std.rand()%global.cam.w/2 - global.cam.w/2 + 5, std.rand()%global.cam.w/2 - 5))
+			obstacles = append(obstacles, mk_saw(std.rand()%(global.cam.w-10) - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20 - 10, std.frand()/12+0.01, std.rand()%global.cam.w/2 - global.cam.w/2 + 5, std.rand()%global.cam.w/2 - 5))
 		case 1:
-			logs = append(logs, mk_log(std.rand()%global.cam.w - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20, std.frand()/8+0.06, 1)) // TODO up going logs
+			obstacles = append(obstacles, mk_log(std.rand()%(global.cam.w-10) - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20 - 10, std.frand()/8+0.06, 1)) // TODO up going logs
 		case 2:
-			//obstacles = append(obstacles, mk_pile(std.rand()%global.cam.w - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20))
+			obstacles = append(obstacles, mk_pile(std.rand()%(global.cam.w-10) - global.cam.w/2, global.cam.y-global.cam.h/2 - std.rand()%20 - 10))
 		}
 	}
 
@@ -270,6 +284,34 @@ fn do_gen() {
 	obstacles = ysort(obstacles)
 }
 
+fn mk_effect_log(x, y: real): EffectLog {
+	e := EffectLog{}
+	e.scale = 1
+	e.rot = 0
+	e.px = x - global.cam.x + global.cam.w/2
+	e.py = y - global.cam.y + global.cam.h/2
+	return e
+}
+
+fn (e: ^EffectLog) start() {
+	e.tx = tween.mk(&e.px, 6, 500)
+	e.ty = tween.mk(&e.py, 6, 500)
+	e.tx.start(tophat.t)
+	e.ty.start(tophat.t)
+}
+
+fn (e: ^EffectLog) handle(): bool {
+	if e.scale > 0.001 * tophat.delta {
+		e.scale -= 0.001 * tophat.delta
+	}
+	e.rot += 0.4 * tophat.delta
+	e.tx.get(tophat.t)
+	e.ty.get(tophat.t)
+
+	log_normal[0].draw(round(e.px), round(e.py), round(e.rot), e.scale)
+	
+	return !(e.px < 7 && e.py < 7)
+}
 
 fn init*() {
 	p1 = Player{entity.mk(polygon.mk(-20, 0, []int32{0, 0, 6, 0, 6, 11, 0, 11}), tophat.black, -2), []char{'w', 'a', 's', 'd'}, global.spritemap_to_anim(image.load("gfx/player-red.png"), 2), image.load("gfx/player-red-idle.png")}
@@ -295,9 +337,14 @@ fn init*() {
 	log_broken_flip = global.flipv_anim(log_broken)
 	log_anims = []^[]image.img{&log_normal, &log_broken, &log_broken_flip}
 
-	saw_trash = []Saw{}
-	log_trash = []Log{}
-	pile_trash = []Pile{}
+	pickup_sound = audio.load("sfx/log_catch.wav")
+	pickup_sound.vol(0.3)
+	music = audio.load("sfx/music.mp3")
+	music.looping(true)
+	music.vol(0.2)
+	music.play()
+	die_sound = audio.load("sfx/die.wav")
+	die_sound.vol(0.3)
 }
 
 // main loop
@@ -313,10 +360,7 @@ fn run*() {
 	}
 	
 	do_gen()
-
-	if input.ispressed(input.KEY_ENTER) {
-		global.camy -= (0.03 + (0.0004 * score)) * tophat.delta
-	}
+	global.camy -= (0.035 + (0.0004 * score)) * tophat.delta
 	global.cam.y = round(global.camy)
 
 	scn := make([]^entity.ent, len(obstacles))
@@ -327,31 +371,39 @@ fn run*() {
 	}
 
 	if !dead {
-		coll := w_ray.getcoll(scn)
 		col := tophat.black
-		if coll > 0 {
-			if coll > 200 {
-				for i, _ in obstacles {
-					if obstacles[i].get_ent().id == coll {
-						obstacles = delete(obstacles, i)
-						break
+		if len(obstacles) > 0 {
+			coll := w_ray.getcoll(scn)
+			if coll > 0 {
+				if coll > 200 {
+					for i, _ in obstacles {
+						if obstacles[i].get_ent().id == coll {
+							e := obstacles[i].get_ent()
+							log_effect = mk_effect_log(e.p.x, e.p.y)
+							log_effect.start()
+							do_effect = true
+							obstacles = delete(obstacles, i)
+							break
+						}
 					}
+					score++
+					pickup_sound.play()
+				} else {
+					die_sound.play()
+					dead = true
 				}
-				score++
-			} else {
+			}
+    
+			coll1 := p1.ent.getcoll(scn)
+			coll2 := p2.ent.getcoll(scn)
+			if coll1 != 0 && coll1 < 200 && coll2 != 0 && coll2 < 200 {
+				die_sound.play()
 				dead = true
 			}
-		}
-  
-		coll1 := p1.ent.getcoll(scn)
-		coll2 := p2.ent.getcoll(scn)
-		if coll1 != 0 && coll1 < 200 && coll2 != 0 && coll2 < 200 {
-			dead = true
-		}
-  
+  	}
+
 		p1.ent.color = col
 		p2.ent.color = col
-
 
 		camx := global.cam.x - global.cam.w/2
 		camy := global.cam.y - global.cam.h/2
@@ -360,6 +412,10 @@ fn run*() {
 		p2.ent.draw(global.cam)
   
 		rawdraw.drawtext(repr(score), 6, 6, 0xffffebff, 4)
+
+		if do_effect {
+			do_effect = log_effect.handle()
+		}
 	} else {
 		rawdraw.setcolor(0x262626aa)
 		rawdraw.drawrect(10, 90, global.cam.w - 20, 70)

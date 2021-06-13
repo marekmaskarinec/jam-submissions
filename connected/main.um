@@ -10,7 +10,7 @@ import (
 )
 
 fn main() {
-	tophat.setup("title", 720, 1280)
+	tophat.setup("logs together", 162, 288)
 
 	global.cam = rectangle.mk(0, 0, 162, 288)
 
