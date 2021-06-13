@@ -1,6 +1,7 @@
 
 import (
 	"tophat/rectangle.um"
+	"image.um"
 )
 
 const (
@@ -12,5 +13,30 @@ var (
 	scene*: int
 	w*, h*: int32
 	cam*: rectangle.rect
-	bg_color*: uint32 = 0xffffffff
+	camy*: real
+	bg_color*: uint32 = 0x4e584aff
 )
+
+fn spritemap_to_anim*(inp: image.img, count: int): []image.img {
+	out := make([]image.img, count)
+
+	w, h := inp.getdims()
+	w = w / count
+
+	for i:=0; i < count; i++ {
+		out[i] = inp.copy()
+		out[i].crop(w * i, 0, w * i + w, h)
+	}
+
+	return out
+}
+
+fn flipv_anim*(inp: []image.img): []image.img {
+	out := make([]image.img, len(inp))
+
+	for i:=0; i < len(inp); i++ {
+		out[i] = inp[i].copy()
+		out[i].flipv()
+	}
+	return out
+}

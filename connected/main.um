@@ -10,7 +10,7 @@ import (
 )
 
 fn main() {
-	tophat.setup("title", 1280, 720)
+	tophat.setup("title", 720, 1280)
 
 	global.cam = rectangle.mk(0, 0, 162, 288)
 

@@ -30,7 +30,6 @@ fn readall*(path: str): str {
   return res
 }
 
-
 fn smaptoanim*(inp: image.img, count: int): []image.img {
 	out := make([]image.img, count)
 
