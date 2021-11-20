@@ -1,0 +1,62 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"rect.um"
+	"image.um"
+	"input.um"
+
+	"global.um"
+)
+
+const (
+	maxSpeed = 0.05
+	gravity = 0.01
+	jumpForce = 0.14
+)
+
+var (
+	e: ent.Ent
+
+	motion: int
+	groundY: th.fu
+	upMotion: th.fu
+)
+
+fn init*() {
+	e.t.s = th.Vf2{1, 1}
+	e.r = rect.mk(0, 0, 5, 8)
+
+	e.t.p.y = global.cam.h/2 - global.cam.h*global.bottomPart - e.r.h
+	groundY = e.t.p.y
+
+	e.c = th.black
+}
+
+fn handle*() {
+	if input.isPressed(int32('a')) {
+		motion -= 1
+	}
+
+	if input.isPressed(int32('d')) {
+		motion += 1
+	}
+
+	if input.isJustPressed(int32('w')) && e.t.p.y == groundY {
+		upMotion = jumpForce
+	}
+
+	e.t.p.x += motion * maxSpeed * th.delta
+
+	upMotion -= gravity
+	e.t.p.y -= upMotion * th.delta
+	if e.t.p.y > groundY {
+		e.t.p.y = groundY
+	}
+
+	motion = 0
+}
+
+fn draw*() {
+	e.draw(global.cam)
+}

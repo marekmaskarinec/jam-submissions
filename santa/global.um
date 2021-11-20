@@ -1,0 +1,18 @@
+
+import (
+	"th.um"
+	"rect.um"
+)
+
+const (
+	NONE* = -1
+	GAME*
+
+	desertColor* = 0xd58253ff
+	bottomPart* = 0.3
+)
+
+var (
+	scene*: th.uu
+	cam*: rect.Rect
+)

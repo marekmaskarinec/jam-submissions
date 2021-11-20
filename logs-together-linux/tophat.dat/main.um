@@ -1,0 +1,32 @@
+
+import (
+	"tophat/tophat.um"
+	"tophat/rawdraw.um"
+	"tophat/rectangle.um"
+	"std.um"
+
+	"global.um"
+	"game.um"
+)
+
+fn main() {
+	tophat.setup("logs together", 162, 288)
+
+	global.cam = rectangle.mk(0, 0, 162, 288)
+
+	game.init()
+	global.scene = global.GAME
+
+	std.srand(std.time())
+
+	for true {
+		tophat.cycle(&global.w, &global.h, global.bg_color, global.cam)
+
+		switch global.scene {
+		case global.GAME:
+			game.run()
+		case global.NONE:
+			return
+		}
+	}
+}

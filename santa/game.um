@@ -1,0 +1,30 @@
+
+import (
+	"rect.um"
+	"canvas.um"
+
+	"global.um"
+	"player.um"
+	"cactus.um"
+)
+
+fn init*() {
+	player.init()
+	cactus.init()
+	cactus.spawn(10)
+}
+
+fn handle*() {
+	player.handle()
+	cactus.handle()
+}
+
+fn draw*() {
+	canvas.setColor(global.desertColor)
+	canvas.drawRect(rect.mk(
+		0, global.cam.h * (1 - global.bottomPart),
+		global.cam.w, global.cam.h * global.bottomPart))
+
+	cactus.draw()
+	player.draw()
+}

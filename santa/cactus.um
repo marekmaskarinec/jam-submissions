@@ -1,0 +1,56 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"image.um"
+
+	"global.um"
+)
+
+const (
+	small* = 0
+	medium*
+	big*	
+)
+
+type Cactus* = struct {
+	e: ^ent.Ent
+	t: int
+}
+
+var (
+	scene*: []^ent.Ent
+	cacti*: []Cactus	
+
+	images: []image.Image
+)
+
+fn init*() {
+	images = make([]image.Image, 3)
+	images[small] = image.load("gfx/cactus-small.png")
+	images[medium] = image.load("gfx/cactus-medium.png")
+	images[big] = image.load("gfx/cactus-big.png")
+
+	scene = []^ent.Ent{}
+	cacti = []Cactus{}
+}
+
+fn spawn*(x: th.fu) {
+	y := global.cam.h/2 - global.cam.h*global.bottomPart - images[0].getDims().y
+	c := Cactus{}
+	c.e = new(ent.Ent)
+	c.e^ = ent.mk(images[small], th.Transform{p: th.Vf2{x, y}, s: th.Vf2{1, 1}})
+	c.t = small
+
+	cacti = append(cacti, c)
+	scene = append(scene, c.e)
+}
+
+fn handle*() { }
+
+fn draw*() {
+	for c in cacti {
+		c.e.i = images[c.t]
+		c.e.draw(global.cam)
+	}	
+}
