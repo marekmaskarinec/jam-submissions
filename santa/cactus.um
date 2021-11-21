@@ -3,6 +3,7 @@ import (
 	"th.um"
 	"ent.um"
 	"image.um"
+	"signal.um"
 
 	"global.um"
 )
@@ -16,6 +17,8 @@ const (
 type Cactus* = struct {
 	e: ^ent.Ent
 	t: int
+	// when water level reaches 1, cactus is updated
+	waterLevel: th.fu
 }
 
 var (
@@ -25,6 +28,16 @@ var (
 	images: []image.Image
 )
 
+fn spawn*(x: th.fu)
+
+fn (c: ^Cactus) water(amount: th.fu) {
+	c.waterLevel += amount
+	if c.waterLevel >= 1 && c.t < big {
+		c.waterLevel = 0
+		c.t++
+	}
+}
+
 fn init*() {
 	images = make([]image.Image, 3)
 	images[small] = image.load("gfx/cactus-small.png")
@@ -33,6 +46,15 @@ fn init*() {
 
 	scene = []^ent.Ent{}
 	cacti = []Cactus{}
+
+	signal.register("spawn_cactus", signal.Callback{
+		spawn(^real(ctx)^)
+	})
+
+	signal.register("water_cactus", signal.Callback{
+		args := ^[]th.fu(ctx)^
+		cacti[round(args[0])].water(args[1])
+	})
 }
 
 fn spawn*(x: th.fu) {

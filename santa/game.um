@@ -15,7 +15,7 @@ fn init*() {
 }
 
 fn handle*() {
-	player.handle()
+	player.handle(cactus.scene)
 	cactus.handle()
 }
 
@@ -25,6 +25,6 @@ fn draw*() {
 		0, global.cam.h * (1 - global.bottomPart),
 		global.cam.w, global.cam.h * global.bottomPart))
 
-	cactus.draw()
 	player.draw()
+	cactus.draw()
 }

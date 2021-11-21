@@ -5,6 +5,7 @@ import (
 	"rect.um"
 	"image.um"
 	"input.um"
+	"signal.um"
 
 	"global.um"
 )
@@ -13,6 +14,7 @@ const (
 	maxSpeed = 0.05
 	gravity = 0.01
 	jumpForce = 0.14
+	wateringSpeed = 0.005
 )
 
 var (
@@ -21,6 +23,9 @@ var (
 	motion: int
 	groundY: th.fu
 	upMotion: th.fu
+
+	idleImage: image.Image
+	walkAnim: []image.Image
 )
 
 fn init*() {
@@ -31,9 +36,13 @@ fn init*() {
 	groundY = e.t.p.y
 
 	e.c = th.black
+
+	idleImage = image.load("gfx/player-idle.png")
+	e.i = idleImage
+	walkAnim = []image.Image{image.load("gfx/player-walk0.png"), image.load("gfx/player-walk1.png")}
 }
 
-fn handle*() {
+fn handle*(cacti: []^ent.Ent) {
 	if input.isPressed(int32('a')) {
 		motion -= 1
 	}
@@ -45,6 +54,32 @@ fn handle*() {
 	if input.isJustPressed(int32('w')) && e.t.p.y == groundY {
 		upMotion = jumpForce
 	}
+
+	if input.isJustPressed(int32('e')) {
+		signal.emit("spawn_cactus", e.t.p.x)
+	}
+
+	if input.isPressed(int32('f')) {
+		colls := e.getColl(cacti, 1)
+		
+		if len(colls) != 0 {
+			signal.emit("water_cactus", []th.fu{colls[0].index, wateringSpeed * th.delta})
+		}
+	}
+
+	if motion == 0 {
+		e.i = idleImage
+	} else {
+		e.animate(4, &walkAnim, th.time)
+		if motion == -1 {
+			e.i.fliph(false)
+			idleImage.fliph(false)
+		} else {
+			e.i.fliph(true)
+			idleImage.fliph(true)
+		}
+	}
+
 
 	e.t.p.x += motion * maxSpeed * th.delta
 
