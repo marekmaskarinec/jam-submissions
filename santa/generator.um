@@ -1,0 +1,90 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"std.um"
+	"image.um"
+	"particles.um"
+
+	"global.um"
+)
+
+const (
+	burnSpeed* = 0.0005
+)
+
+var (
+	fuel*: th.fu
+	e*: ent.Ent
+	cimg: image.Image
+
+	smoke: particles.Emitter
+)
+
+fn init*() {
+	e = ent.mk(image.load("gfx/generator.png"), th.Transform{})
+	e.t.p.y = global.cam.h/2 - global.cam.h*global.bottomPart - e.r.h
+	e.t.s = th.Vf2{1, 1}
+	
+	//e.r.x = 7
+	//e.r.w = 9
+
+	cimg = global.bigCactusImage
+
+	smoke = particles.Emitter{
+		pos: e.t.p.add(th.Vf2{1, 4}),
+		dm: th.Vf2{2, 2},
+		gravity: th.Vf2{1, 1},
+		repeat: false,
+		active: true,
+		
+		angle: th.Vf2{-75, -70},
+		lifetime: 4000,
+		lifetimeRandomness: 0.5,
+		velocity: 0.02,
+		velocityRandomness: 0.4,
+		size: 0.5,
+		sizeRandomness: 1,
+		maxSize: 1,
+		rotation: 0,
+		rotationRandomness: 0,
+		maxRotation: 0,
+
+		colors: []uint32{0x39602fee, 0x58834daa, 0x71a56444},
+		particles: make([]particles.Particle, 2000)}
+}
+
+fn startParticles*() {
+	smoke.repeat = true
+	for i:=0; i < len(smoke.particles); i++ {
+		smoke.particles[i] = particles.Particle{
+			th.time + std.rand()%25 + i,
+			std.rand()}
+	}
+}
+
+fn addFuel*() {
+	fuel = 1
+	startParticles()
+}
+
+fn handle*() {
+	fuel -= burnSpeed * th.delta
+	if fuel < 0 {
+		fuel = 0
+		smoke.repeat = false
+	}
+}
+
+fn draw*() {
+	if fuel != 0 {
+		cimg.crop(th.Vf2{0, 0}, th.Vf2{1, fuel})
+		cimg.draw(th.Transform{
+			p: th.Vf2{e.t.p.x + 8 + global.cam.w/2, e.t.p.y - 5*fuel + global.cam.h/2},
+			s: th.Vf2{1, 1}})
+		cimg.crop(th.Vf2{0, 0}, th.Vf2{1, 1})
+
+	}
+	smoke.draw(global.cam, th.time)
+	e.draw(global.cam)
+}

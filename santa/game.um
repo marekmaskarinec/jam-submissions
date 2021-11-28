@@ -6,17 +6,19 @@ import (
 	"global.um"
 	"player.um"
 	"cactus.um"
+	"generator.um"
 )
 
 fn init*() {
 	player.init()
 	cactus.init()
-	cactus.spawn(10)
+	generator.init()
 }
 
 fn handle*() {
 	player.handle(cactus.scene)
 	cactus.handle()
+	generator.handle()
 }
 
 fn draw*() {
@@ -25,6 +27,7 @@ fn draw*() {
 		0, global.cam.h * (1 - global.bottomPart),
 		global.cam.w, global.cam.h * global.bottomPart))
 
+	generator.draw()
 	player.draw()
 	cactus.draw()
 }

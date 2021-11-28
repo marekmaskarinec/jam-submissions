@@ -8,6 +8,8 @@ import (
 	"signal.um"
 
 	"global.um"
+	"cactus.um"
+	"generator.um"
 )
 
 const (
@@ -15,6 +17,10 @@ const (
 	gravity = 0.01
 	jumpForce = 0.14
 	wateringSpeed = 0.005
+
+	leftHand = th.Vf2{0, 4}
+	rightHand = th.Vf2{3, 4}
+	cactusOff = th.Vf2{0, 2}
 )
 
 var (
@@ -26,6 +32,10 @@ var (
 
 	idleImage: image.Image
 	walkAnim: []image.Image
+
+	heldCactus: th.iu
+
+	handPos: th.Vf2
 )
 
 fn init*() {
@@ -40,18 +50,24 @@ fn init*() {
 	idleImage = image.load("gfx/player-idle.png")
 	e.i = idleImage
 	walkAnim = []image.Image{image.load("gfx/player-walk0.png"), image.load("gfx/player-walk1.png")}
+
+	heldCactus = -1
+
+	handPos = leftHand
 }
 
 fn handle*(cacti: []^ent.Ent) {
-	if input.isPressed(int32('a')) {
+	if input.isPressed(input.ARROW_LEFT) {
 		motion -= 1
+		handPos = leftHand
 	}
 
-	if input.isPressed(int32('d')) {
+	if input.isPressed(input.ARROW_RIGHT) {
 		motion += 1
+		handPos = rightHand 
 	}
 
-	if input.isJustPressed(int32('w')) && e.t.p.y == groundY {
+	if input.isJustPressed(input.ARROW_UP) && e.t.p.y == groundY {
 		upMotion = jumpForce
 	}
 
@@ -64,6 +80,31 @@ fn handle*(cacti: []^ent.Ent) {
 		
 		if len(colls) != 0 {
 			signal.emit("water_cactus", []th.fu{colls[0].index, wateringSpeed * th.delta})
+		}
+	}
+
+	if input.isJustPressed(int32('q')) {
+		if heldCactus != -1 {
+			coll := e.getColl([]^ent.Ent{&generator.e}, 1)
+
+			if len(coll) != 0 {
+				cactus.cacti = delete(cactus.cacti, heldCactus)
+				cactus.scene = delete(cactus.scene, heldCactus)
+				heldCactus = -1
+				generator.addFuel()
+			}
+		} else {
+			colls := e.getColl(cacti, 1)
+      
+			if len(colls) != 0 {
+				coll := colls[0].index
+				c := cactus.cacti[coll]
+      
+				if !c.held && c.t == cactus.big {
+					cactus.cacti[coll].held = true
+					heldCactus = coll
+				}
+			}
 		}
 	}
 
@@ -87,6 +128,11 @@ fn handle*(cacti: []^ent.Ent) {
 	e.t.p.y -= upMotion * th.delta
 	if e.t.p.y > groundY {
 		e.t.p.y = groundY
+	}
+
+	if heldCactus != -1 {
+		cactus.cacti[heldCactus].e.t.r = 45 * motion
+		cactus.cacti[heldCactus].e.t.p = e.t.p.sub(cactus.baseOff).add(handPos).add(cactusOff)
 	}
 
 	motion = 0

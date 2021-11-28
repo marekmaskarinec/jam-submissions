@@ -12,6 +12,8 @@ const (
 	small* = 0
 	medium*
 	big*	
+
+	baseOff* = th.Vf2{3, 7}
 )
 
 type Cactus* = struct {
@@ -19,6 +21,7 @@ type Cactus* = struct {
 	t: int
 	// when water level reaches 1, cactus is updated
 	waterLevel: th.fu
+	held: bool
 }
 
 var (
@@ -43,6 +46,7 @@ fn init*() {
 	images[small] = image.load("gfx/cactus-small.png")
 	images[medium] = image.load("gfx/cactus-medium.png")
 	images[big] = image.load("gfx/cactus-big.png")
+	global.bigCactusImage = images[big]
 
 	scene = []^ent.Ent{}
 	cacti = []Cactus{}
@@ -63,6 +67,7 @@ fn spawn*(x: th.fu) {
 	c.e = new(ent.Ent)
 	c.e^ = ent.mk(images[small], th.Transform{p: th.Vf2{x, y}, s: th.Vf2{1, 1}})
 	c.t = small
+	c.e.t.o = baseOff
 
 	cacti = append(cacti, c)
 	scene = append(scene, c.e)

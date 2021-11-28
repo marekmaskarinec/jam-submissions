@@ -2,6 +2,7 @@
 import (
 	"th.um"
 	"rect.um"
+	"image.um"
 )
 
 const (
@@ -15,4 +16,5 @@ const (
 var (
 	scene*: th.uu
 	cam*: rect.Rect
+	bigCactusImage*: image.Image
 )
