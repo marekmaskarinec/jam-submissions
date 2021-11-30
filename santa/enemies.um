@@ -1,0 +1,52 @@
+
+type Normal* = struct {
+	e: ent.Ent
+}
+
+const (
+	normalMoveSpeed = 0.01								
+)
+
+var (
+	normalImage: image.Image		
+
+	normals*: []Normal
+	nscene*: []^ent.Ent
+)
+
+fn (n: ^Normal) takeDmg() {
+	
+}
+
+fn init*() {
+	normalImage = image.load("gfx/player-idle.png")
+
+	normals = []Normal{}
+	nscene = []^ent.Ent{}
+}
+
+fn handle*() {
+	for i, e in normals {
+		normals[i].e.t.p.x += e.e.t.p.x/fabs(e.e.t.p.x) * normalMoveSpeed
+
+		coll = e.e.getColl(cactus.scene, 1)
+		if len(coll) != 0 {
+			ix := coll[0].index
+			normals[i].takeDmg()
+			switch (cactus.cacti[ix].t) {
+			case cactus.medium:
+				cactus.remove(ix)
+			case cacsus.big:
+				cactus.cacti[ix].t = cactus.medium
+			}	
+
+			continue
+		}
+	}
+}
+
+fn draw*() {
+	for e in normals {
+		e.e.draw(global.cam)
+	}
+}
