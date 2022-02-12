@@ -2,6 +2,9 @@
 import (
 	"th.um"
 	"rect.um"
+	"canvas.um"
+	
+	"global.um"
 )
 
 type Scene* = struct {
@@ -11,15 +14,18 @@ type Scene* = struct {
 }
 
 const (
-	gameScn* = 0
+	gameScn* = 1
 	gameOverScn*
 	dialogScn*
 	menuScn*
+
+	curtainsLen = 200
 )
 
 var (
-	state: int = -1 // -1 is switching
+	state: int // -1 is switching
 	target: int
+	source: int
 
 	scenes: []Scene
 
@@ -35,16 +41,29 @@ fn add*(r, h: fn(), d: fn(cam: rect.Rect)) {
 }
 
 fn change*(tgt: int) {
+	if target == tgt {
+		return
+	}
+
 	target = tgt
+	if state != -1 {
+		source = state
+	}
 	state = -1
 
-	changeStart = th.time
+	scenes[target].reseter()
+	changeStart = th.time - 1
 }
 
 fn handle*() {
 	if state == -1 {
-		state = target
-		scenes[state].reseter()
+		if th.time - changeStart < curtainsLen && source != -1 {
+			scenes[source].handler()
+		} else if th.time - changeStart < curtainsLen * 2 {
+			scenes[target].handler()
+		} else {
+			state = target
+		}
 		return
 	}
 	scenes[state].handler()
@@ -52,6 +71,23 @@ fn handle*() {
 
 fn draw*(cam: rect.Rect) {
 	if state == -1 {
+		if th.time - changeStart < curtainsLen && source != -1 {
+			scenes[source].drawer(cam)
+			canvas.drawRect(global.darkColor, rect.mk(
+				0, 0,
+				round(42 * (real(th.time-changeStart)/curtainsLen)), 48))
+			canvas.drawRect(global.darkColor, rect.mk(
+				84 - round(42 * (real(th.time-changeStart)/curtainsLen)), 0,
+				42, 48))
+		} else if th.time - changeStart < curtainsLen * 2 {
+			scenes[target].drawer(cam)
+			canvas.drawRect(global.darkColor, rect.mk(
+				0, 0,
+				round(42 * (2 - real(th.time-changeStart)/curtainsLen)), 48))
+			canvas.drawRect(global.darkColor, rect.mk(
+				round(42 * (real(th.time-changeStart)/curtainsLen)), 0,
+				42, 48))
+		}
 		return
 	}
 

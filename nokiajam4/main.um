@@ -8,6 +8,7 @@ import (
 	"scene.um"
 	"global.um"
 	"noksnd.um"
+	"splash.um"
 	"menu/menu.um"
 	"game/gameloop.um"
 	"dialog/dialog.um"
@@ -37,13 +38,13 @@ fn main() {
 	noksnd.init()
 	scene.init()
 
+	splash.init()
 	gameloop.init()
 	gameover.init()
 	dialog.init()
 	menu.init()
 
 	menu.mainMenuPreset()
-	scene.change(scene.menuScn)
 
 	for window.cycle(global.cam) && global.running {
 		// draw background

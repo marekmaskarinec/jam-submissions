@@ -1,0 +1,38 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"image.um"
+
+	"scene.um"
+)
+
+const (
+	length = 800
+)
+
+var (
+	img: image.Image
+)
+
+fn reset*() {
+
+}
+
+fn handle*() {
+	if th.time > length {
+		scene.change(scene.menuScn)
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	img.draw(th.Transform{
+		p: th.Vf2{42, 21}.sub(img.getDims().div(th.Vf2{2, 2})),
+		s: th.Vf2{1, 1}}, th.white)
+}
+
+fn init*() {
+	img = image.load("gfx/thlogo.png")
+	printf("thlogo.png: %s\n", repr(img.validate()))
+	scene.add(reset, handle, draw)	
+}

@@ -50,3 +50,12 @@ fn centeredText*(color: uint32, text: []str, scale, o: th.fu) {
 		canvas.drawText(line, p, color, scale)
 	}
 }
+
+fn browser*(url: str) {
+	if std.getenv("HOME") != "" {
+		std.system("xdg-open " + url)
+	} else {
+		std.system("start " + url)
+	}
+}
+

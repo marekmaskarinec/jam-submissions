@@ -33,7 +33,7 @@ fn reset*() {
 }
 
 fn mainMenuPreset*() {
-	title = "MENU"
+	title = "YOU EMPOWER ME"
 	data = []str{"PLAY", "ARCADE", "QUIT"}
 	callbacks = []fn(){
 		fn() {

@@ -77,7 +77,7 @@ fn die*() {
 	} else {
 		menu.data = []str{"RETRY", "MENU", "QUIT"}
 		menu.callbacks = []fn(){
-			fn() { scene.change(0) },
+			fn() { scene.change(scene.gameScn) },
 			fn() { menu.mainMenuPreset() },
 			fn() { global.running = false }}
 	}
@@ -136,11 +136,13 @@ fn handle*() {
 fn draw*(cam: rect.Rect) {
 	sp := game.toScreen(p.rnd())
 
-	// eyes
-	if th.time - collTime > invincTime / 2 || (th.time / 60) % 2 == 0 {
-		canvas.drawRect(global.darkColor, rect.mk(sp.x, sp.y, 1, 2))
-		canvas.drawRect(global.darkColor, rect.mk(sp.x + 2, sp.y, 1, 2))
+	if th.time - collTime < invincTime && (th.time / 100) % 2 == 0 {
+		return
 	}
+
+	// eyes
+	canvas.drawRect(global.darkColor, rect.mk(sp.x, sp.y, 1, 2))
+	canvas.drawRect(global.darkColor, rect.mk(sp.x + 2, sp.y, 1, 2))
 
 	var left, right: int
 	if m.x != 0 || m.y != 0 {

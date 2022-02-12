@@ -5,6 +5,7 @@ import (
 	"signal.um"
 	"canvas.um"
 
+	"../util.um"
 	"../scene.um"
 	"../global.um"
 	"../menu/menu.um"
@@ -70,7 +71,7 @@ var (
 	stage*: int
 
 	defCfg*: StageCfg = StageCfg{
-		duration: 20000,
+		duration: 25000,
 
 		bulletCount: 8,
 		bulletSpeedRange: th.Vf2{0.008, 0.008},
@@ -92,16 +93,24 @@ var (
 
 	upgrades: [stageCount * 2 - 2]bool
 	dialogs: [stageCount]str = [stageCount]str{
-		"YOU PASSED MY FIRST STAGE.I WOULDN'T BE SO HAPPY.EVERY TIME YOU BEAT A STAGE," +
-		"I GET MORE POWERFUL. SINCE IT'S YOU, I WILL LET YOU CHOOSE WHAT I GET BETTER AT.",
+		"SEEMS LIKE YOU COMPLETED MY FIRST TEST. YOU DID BETTER THAN I THOUGHT YOU WOULD." +
+		"YOUR HEIGHT MUST MAKE IT EASY FOR YOU TO DODGE PROJECTILES. ANYWAYS, JUST FOR YOU INFO, " +
+		"EVERY TIME YOU BEAT A STAGE, I GET MORE POWERFUL. SINCE YOU DID SO WELL, I WILL LET " +
+		"YOU CHOOSE WHAT I GET BETTER AT. GOOD LUCK!",
 
-		"ARE YOU STILL TRYING TO BEAT ME? IT'S OBVIOUS HOW THIS WILL END UP.",
+		"YOU REALISE YOU CAN'T KEEP BEATING ME FOREVER, RIGHT? THERE IS A LIMIT TO YOUR POWER," +
+		"BUT NONE TO MINE. RUN WHILE YOU STILL CAN... JUST JOKING. YOU ARE TRAPPED HERE.",
 
-		"THIS IS GETTING HARDER ISN'T IT? HOW CAN YOU BE SO STUPID TO NOT GIVE UP?",
+		"MORE POWER? DON'T MIND IF I DO. I WILL GET SO POWERFUL THAT ONE DAY I MIGHT EVEN " +
+		"MAKE YOU NORMAL HEIGHT. GIVEN YOU SURVIVE ME ALMOST POWERFUL ENOUGH TO MAKE YOU NORMAL HEIGHT",
 
-		"MORE POWER? DON'T MIND IF I DO.I'M SO POWERFUL THANKS TO YOU STUPID DWARF.",
+		"GIVE ME THE POWEEEEEEER. LOOK AT WHAT I CAN DO WITH ALL THIS POWER. LOOK AT THIS APPLE." +
+		"OH WAIT YOU CAN'T SEE ME. I WONDER HOW MUCH POWER I STILL NEED TO ACCOMPLISH MY GOAL.",
 
-		"SO MUCH POWEEEEEER. I WILL DIE NOW BUT THE AUTHOR ISN'T SURE WHAT TO PUT INTO THIS MONOLOG"}
+		"IS IT REALLY HAPPENING? AM I TRANSFORMING? IS THIS WHAT THEY'VE TALKED ABOUT? WILL I " +
+		"BE ABLE TO JOIN THEM? AAAAAAAAAA. WHAT IS HAPPENING TO MY BODY? WHY IS " +
+		"IT BURNING? IT ISN'T SUPPOSED TO BE LIKE THAT. THEY PROMISSED I WILL BE INVINCIBLE." +
+		"ARE YOU RESPONSIBLE DWARF? DID THEY CONTA- ...... NO PLEASE, LET ME LIVE!"}
 	playerHp*: int
 )
 
@@ -155,6 +164,9 @@ fn reset*() {
 	playerHp = 10
 
 	stageCfg = defCfg
+	if stage == 0 {
+		stageCfg.duration = 10000
+	}
 	stageCfg.applyUpgrades()
 	stageStart = th.time
 }
@@ -178,7 +190,8 @@ fn handle*() {
 			menu.title = "CREDITS"
 			menu.data = []str{"BY MAREK MASKARINEC", "MADE WITH THE TOPHAT ENGINE", "GO TO MENU"}
 			menu.callbacks = []fn() {
-				fn(){}, fn(){},
+				fn() { util.browser("https://mrms.cz") },
+				fn() { util.browser("https://mrms.cz/tophat.html") },
 				fn() {
 					menu.mainMenuPreset()
 					scene.change(scene.menuScn)
@@ -191,13 +204,13 @@ fn handle*() {
 		menu.callbacks = []fn(){
 			fn() {
 				upgrades[stage*2] = true
-				scene.change(0)
 				stage++
+				scene.change(scene.gameScn)
 			},
 			fn() {
 				upgrades[stage*2 + 1] = true
-				scene.change(0)
 				stage++
+				scene.change(scene.gameScn)
 			}}
 	}
 }
