@@ -1,0 +1,81 @@
+
+import (
+	"th.um"
+	"std.um"
+	"ent.um"
+	"rect.um"
+	"image.um"
+
+	"game.um"
+	"global.um"
+)
+
+type Bullet* = struct {
+	motion: th.Vf2
+	e: ^ent.Ent
+	p: th.Vf2
+	start: th.Vf2
+}
+
+var (
+	bullets*: []Bullet
+	scn*: []^ent.Ent
+	agl: int
+)
+
+fn (b: ^Bullet) gen*() {
+	range := game.stageCfg.bulletSpeedRange
+
+	speed := std.frand() * (range.y - range.x) + range.x
+	//agl := std.rand() % 360	
+	agl += 360/len(bullets)
+
+	b.p = th.Vf2{0, -game.center.mag()}.rotated(th.Vf2{}, agl).add(game.center)
+	b.motion = game.center.sub(b.p).norm().mul(th.Vf2{speed, speed})
+}
+
+fn reset*() {
+	if game.stageCfg.bulletCount == 0 {
+		return
+	}
+
+	bullets = make([]Bullet, game.stageCfg.bulletCount)
+	scn = make([]^ent.Ent, game.stageCfg.bulletCount)
+	
+	for i,e in scn {
+		scn[i] = new(ent.Ent)
+		e = scn[i]
+		e^ = ent.mk(image.Image{0}, th.Transform{s: th.Vf2{1, 1}})
+		e.r = rect.mk(0, 0, 1, 1)
+		e.c = global.darkColor
+		bullets[i].e = e
+		bullets[i].gen()
+	}
+}
+
+fn init*() {
+}
+
+fn handle*() {
+	if game.stageCfg.bulletCount == 0 {
+		return
+	}
+
+	for i,b in bullets {
+		bullets[i].p = b.p.add(b.motion.mul(th.Vf2{th.delta, th.delta}))
+		if bullets[i].p.distanceTo(b.start) > sqrt(2 * (game.size * game.size)) {
+			bullets[i].gen()
+		}
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	if game.stageCfg.bulletCount == 0 {
+		return
+	}
+
+	for i,b in bullets {
+		b.e.t.p = game.toWorld(b.p.rnd())
+		b.e.draw(cam)
+	}
+}

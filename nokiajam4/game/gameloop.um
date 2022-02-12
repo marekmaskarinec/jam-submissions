@@ -1,0 +1,68 @@
+
+import (
+	"rect.um"
+
+	"hud.um"
+	"game.um"
+	"sine.um"
+	"block.um"
+	"laser.um"
+	"bullet.um"
+	"player.um"
+	"../scene.um"
+)
+
+fn reset*() {
+	game.reset()
+	player.reset()
+
+	bullet.reset()
+	sine.reset()
+	laser.reset()
+	block.reset()
+
+	hud.reset()
+}
+
+fn handle*()
+fn draw*(cam: rect.Rect)
+
+fn init*() {
+	reset()
+
+	game.init()
+	player.init()
+
+	bullet.init()
+	sine.init()
+	laser.init()
+	block.init()
+
+	hud.init()
+
+	scene.add(reset, handle, draw)
+}
+
+fn handle*() {
+	game.handle()
+	player.handle()
+
+	bullet.handle()
+	sine.handle()
+	laser.handle()
+	block.handle()
+
+	hud.handle()
+}
+
+fn draw*(cam: rect.Rect) {
+	game.draw(cam)
+	player.draw(cam)
+
+	bullet.draw(cam)
+	sine.draw(cam)
+	laser.draw(cam)
+	block.draw(cam)
+
+	hud.draw(cam)
+}

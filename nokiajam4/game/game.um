@@ -1,0 +1,207 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"signal.um"
+	"canvas.um"
+
+	"../scene.um"
+	"../global.um"
+	"../menu/menu.um"
+)
+
+type StageCfg* = struct {
+	duration: int
+
+	bulletCount: int
+	bulletSpeedRange: th.Vf2
+
+	sineCount: int
+	laserFrequency: int
+	laserChance: th.fu
+	waveSize: th.fu
+	bidirLaser: bool
+
+	blockInterval: int
+	blockChance: th.fu
+}
+
+const (
+	gsNormal* = 0
+	gsArcade*
+	gsDialogue*
+
+	size* = 46
+	center* = th.Vf2{size/2, size/2}
+	xoff* = 84 - 47
+	stageCount* = 5
+
+	// after stage 1
+	upMoreBullets* = 0
+	upLasers*
+
+	// after stage 2
+	upLongerStage*
+	upBlocks*
+
+	// after stage 3
+	upSineBullets*
+	upFasterBullets*
+
+	// after stage 4
+	upLessHp*
+	upWaveSize*
+
+	upSpelling = [stageCount * 2 - 2]str{
+		"MORE BULLETS",
+		"LASERS",
+		"LONGER STAGE",
+		"BLOCKS",
+		"SINE BULLETS",
+		"FASTER BULLETS",
+		"LESS HEALTH",
+		"BIGGER WAVE SIZE"}
+)
+
+var (
+	state*: int
+
+	stageStart*: int
+	stage*: int
+
+	defCfg*: StageCfg = StageCfg{
+		duration: 20000,
+
+		bulletCount: 8,
+		bulletSpeedRange: th.Vf2{0.008, 0.008},
+		
+		sineCount: 0,
+		waveSize: 4,
+
+		laserFrequency: 2000,
+		laserChance: 0,
+
+		blockInterval: 3000,
+		blockChance: 0}
+
+	stageCfg*: StageCfg
+
+	isArcade*: bool
+	score*: int
+	maxScore*: int
+
+	upgrades: [stageCount * 2 - 2]bool
+	dialogs: [stageCount]str = [stageCount]str{
+		"YOU PASSED MY FIRST STAGE.I WOULDN'T BE SO HAPPY.EVERY TIME YOU BEAT A STAGE," +
+		"I GET MORE POWERFUL. SINCE IT'S YOU, I WILL LET YOU CHOOSE WHAT I GET BETTER AT.",
+
+		"ARE YOU STILL TRYING TO BEAT ME? IT'S OBVIOUS HOW THIS WILL END UP.",
+
+		"THIS IS GETTING HARDER ISN'T IT? HOW CAN YOU BE SO STUPID TO NOT GIVE UP?",
+
+		"MORE POWER? DON'T MIND IF I DO.I'M SO POWERFUL THANKS TO YOU STUPID DWARF.",
+
+		"SO MUCH POWEEEEEER. I WILL DIE NOW BUT THE AUTHOR ISN'T SURE WHAT TO PUT INTO THIS MONOLOG"}
+	playerHp*: int
+)
+
+fn (cfg: ^StageCfg) applyUpgrades*() {
+	if game.isArcade {
+		upgrades = []bool{
+			true, true,
+			false, true,
+			true, false,
+			false, false}
+	}
+
+	for i,u in upgrades {
+		if !u {
+			continue
+		}
+		switch i {
+		case upFasterBullets:
+			cfg.bulletSpeedRange = th.Vf2{0.016, 0.016}
+		case upMoreBullets:
+			cfg.bulletCount = round(cfg.bulletCount * 1.5)
+		case upSineBullets:
+			cfg.sineCount = 2
+		case upLongerStage:
+			cfg.duration *= 2
+		case upLasers:
+			cfg.laserChance = 0.4
+		case upWaveSize:
+			cfg.waveSize *= 2
+		case upBlocks:
+			cfg.blockChance = 1
+		case upLessHp:
+			playerHp = 5
+		}
+	}
+}
+
+fn toScreen*(p: th.Vf2): th.Vf2 {
+	return th.Vf2{p.x + xoff, p.y + 1}
+}
+
+fn toWorld*(p: th.Vf2): th.Vf2 {
+	return global.cam.toWorld(toScreen(p))
+}
+
+fn onSetArcade(ctx: interface{}) {
+	isArcade = bool(ctx)
+}
+
+fn reset*() {
+	playerHp = 10
+
+	stageCfg = defCfg
+	stageCfg.applyUpgrades()
+	stageStart = th.time
+}
+
+fn init*() {
+	signal.register("set_arcade", onSetArcade)
+}
+
+fn handle*() {
+	if isArcade {
+		score = (th.time - stageStart) / 100
+		if score > maxScore {
+			maxScore = score
+		}
+	}
+
+	if !isArcade && th.time - stageStart > stageCfg.duration {
+		signal.emit("stage_pass", dialogs[stage])
+		scene.change(scene.dialogScn)
+		if stage == stageCount - 1 {
+			menu.title = "CREDITS"
+			menu.data = []str{"BY MAREK MASKARINEC", "MADE WITH THE TOPHAT ENGINE", "GO TO MENU"}
+			menu.callbacks = []fn() {
+				fn(){}, fn(){},
+				fn() {
+					menu.mainMenuPreset()
+					scene.change(scene.menuScn)
+				}}
+			return
+		}
+
+		menu.title = "CHOOSE UPGRADE"
+		menu.data = []str{upSpelling[stage * 2], upSpelling[stage*2 + 1]}
+		menu.callbacks = []fn(){
+			fn() {
+				upgrades[stage*2] = true
+				scene.change(0)
+				stage++
+			},
+			fn() {
+				upgrades[stage*2 + 1] = true
+				scene.change(0)
+				stage++
+			}}
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	canvas.drawRect(global.lightColor, rect.mk(xoff, 1, size, size))
+}

@@ -1,0 +1,52 @@
+
+import (
+	"th.um"
+	"std.um"
+	"canvas.um"
+
+	"global.um"
+)
+
+fn readall*(name: str): str {
+		f := std.fopen(name, "r")
+    const blockSize = 16
+    res := ""
+
+    for ok := true; ok {
+	    var buff: [blockSize + 1]char
+	    ok = std.fread(f, ^[blockSize]char(&buff)) == 1
+	    res += str([]char(buff))
+    }
+
+		std.fclose(f)
+    return res
+}
+
+fn maxf*(v1, v2: th.fu): th.fu {
+	if v1 > v2 { return v1 }
+	return v2
+}
+
+fn minf*(v1, v2: th.fu): th.fu {
+	if v1 < v2 { return v1 }
+	return v2
+}
+
+fn snap*(v, s: th.fu): th.fu {
+	return round(v / s) * s
+}
+
+fn rrand*(min, max: int): int {
+	r := std.rand()
+	r = r % (max - min)
+	return r + min
+}
+
+fn centeredText*(color: uint32, text: []str, scale, o: th.fu) {
+	for i,line in text {
+		s := canvas.textSize(line, scale)
+  
+		p := th.Vf2{(global.cam.w - s.x) / 2, o + 6 * i} 
+		canvas.drawText(line, p, color, scale)
+	}
+}

@@ -1,0 +1,52 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"canvas.um"
+
+	"game.um"
+	"global.um"
+)
+
+fn reset*() {
+
+}
+
+fn init*() {
+
+}
+
+fn handle*() {
+
+}
+
+fn progressBar*(col: uint32, p: th.Vf2, dm: th.Vf2, val, max: int) {
+	prog := real32(val)/max
+
+	dm.x = round(prog * dm.x)
+	canvas.drawRect(col, rect.mk(p.x, p.y, dm.x, dm.y))
+}
+
+fn draw*(cam: rect.Rect) {
+	if game.isArcade {
+		canvas.drawText(
+			"HP\n\n" +
+			"SCORE\n" + repr(game.score) + "\n" +
+			"TOP\n" + repr(game.maxScore),
+			th.Vf2{1, 1}, global.lightColor, 1)
+		progressBar(global.lightColor, th.Vf2{1, 7}, th.Vf2{84 - 50, 5}, game.playerHp, 10)
+		return
+	}
+
+	canvas.drawText(
+		"HP\n\n" +
+		"TIME\n\n" +
+		"STAGE\n\n",
+		th.Vf2{1, 1}, global.lightColor, 1)
+
+	progressBar(global.lightColor, th.Vf2{1, 7}, th.Vf2{84 - 50, 5}, game.playerHp, 10)
+	progressBar(global.lightColor, th.Vf2{1, 6 * 3 + 1}, th.Vf2{84 - 50, 5},
+		th.time - game.stageStart, game.stageCfg.duration)
+
+	progressBar(global.lightColor, th.Vf2{1, 6 * 5 + 1}, th.Vf2{84 - 50, 5}, game.stage + 1, 5)
+}

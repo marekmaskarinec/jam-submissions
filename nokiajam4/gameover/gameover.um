@@ -1,0 +1,40 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"input.um"
+	"canvas.um"
+
+	"../util.um"
+	"../scene.um"
+	"../global.um"
+)
+
+fn reset*() {
+
+}
+
+fn handle*()
+fn draw*(cam: rect.Rect)
+
+fn init*() {
+	reset()
+
+	scene.add(reset, handle, draw)
+}
+
+fn handle*() {
+	if input.isJustPressed(input.key_enter) {
+		scene.change(scene.gameScn)
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	util.centeredText(global.lightColor,
+		[]str{
+			"GAME OVER",
+			"","",
+			"ENTER: RETRY",
+			"Q: QUIT"},
+			1, 5)
+}

@@ -1,0 +1,105 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"input.um"
+	"signal.um"
+	"canvas.um"
+
+	"../util.um"
+	"../scene.um"
+	"../global.um"
+)
+
+const (
+	scrollSpeed = 0.004 
+)
+
+var (
+	title*: str
+	data*: []str
+	scroll: []th.fu
+	callbacks*: []fn()
+
+	choice: int
+)
+
+fn reset*() {
+	choice = 0
+	scroll = make([]th.fu, len(data))
+	for i,s in scroll {
+		scroll[i] = 0
+	}
+}
+
+fn mainMenuPreset*() {
+	title = "MENU"
+	data = []str{"PLAY", "ARCADE", "QUIT"}
+	callbacks = []fn(){
+		fn() {
+			signal.emit("set_arcade", false)
+			scene.change(scene.gameScn)
+		},
+		fn() {
+			signal.emit("set_arcade", true)
+			scene.change(scene.gameScn)
+		},
+		fn() {
+			global.running = false	
+		}}
+	reset()
+}
+
+fn handle*()
+fn draw*(cam: rect.Rect)
+
+fn init*() {
+	scene.add(reset, handle, draw)
+}
+
+fn handle*() {
+	if input.isJustPressed(input.key_down) {
+		choice++
+		if choice >= len(data) {
+			choice = 0
+		}
+	}
+
+	if input.isJustPressed(input.key_up) {
+		choice--
+		if choice < 0 {
+			choice = len(data) - 1
+		}
+	}
+
+	if input.isJustPressed(input.key_enter) {
+		callbacks[choice]()
+	}
+
+	for i,e in data {
+		if len(e) < 84 / 6 {
+			continue
+		}
+
+		scroll[i] += scrollSpeed * th.delta
+		if trunc(scroll[i]) > len(e) {
+			scroll[i] = -84/6
+		}
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	util.centeredText(global.lightColor, []str{title}, 1, 1)
+	
+	y := 48 - len(data) * 7
+	for i,s in data {
+		col := global.lightColor
+		if choice == i {
+			canvas.drawRect(col, rect.mk(0, y - 1, 84, 7))
+			col = global.darkColor
+		}
+
+		canvas.drawText(s, th.Vf2{1 - round(scroll[i] * 6), y}, col, 1)
+		y += 7
+	}
+}

@@ -1,0 +1,50 @@
+general idea
+------------
+
+A bullet hell game, where on the end of each level, you have to choose an
+upgrade for the enemy. The game will end when the enemy has too much power.
+
+Choosing the powerups will be done through dialogs. The enemy will start
+talking to you a bit mockingly, but othervise normally. When he gets more
+powerful, he will start having speech issues and will talk like a mad person.
+
+gameplay
+--------
+
+attack types:
+
+	bullets      - go from sides of the screen to the center
+	sine bullets - go horizontally and vertically in a sine wave
+	lasers       - a random point is chosen, the laser goes from the point,
+	               through the middle, extending to the edge
+	block        - a dithered square, damages you when you enter it
+
+
+The story will be split into 5 stages. Each stage will introduce a new attack,
+except for the 5th stage, which will be a boss fight. After the 5th stage,
+there might be an escape sequence.
+
+There will also be an arcade mode.
+
+looks
+-----
+
+The actual game is on a 46x46 screen, which will be positioned on the right.
+On the left, you will have info like health and current stage.
+
+Bullets will be one pixel, Sine bullets will be two pixels wide.
+
+todo
+----
+
+sounds
+
+enemy dialog content
+
+scene transitions
+
+?links in credits
+
+-----
+
+one row of hud section can fit exactly 6 chars

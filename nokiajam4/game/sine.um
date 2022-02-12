@@ -1,0 +1,111 @@
+
+import (
+	"th.um"
+	"std.um"
+	"ent.um"
+	"rect.um"
+	"image.um"
+
+	"game.um"
+	"global.um"
+)
+
+type SineBullet* = struct {
+	motion: th.Vf2
+	e: ^ent.Ent
+	p: th.Vf2
+	start: th.Vf2
+}
+
+var (
+	bullets*: []SineBullet
+	scn*: []^ent.Ent
+)
+
+fn (b: ^SineBullet) gen*() {
+	m := th.Vf2{}
+	r := std.rand()/3%2
+	r2 := std.rand()/3%2
+	r3 := r2
+	if r2 == 0 {
+		r3 = -1
+		r2 = 1
+	} else {
+		r2 = 0
+	}
+
+	s := th.Vf2{}
+	o := std.rand()%game.size
+	gs := game.size + std.rand()%(game.size/4)
+	if r == 0 {
+		m.x = r3
+		s = th.Vf2{gs * r2, o}
+	} else {
+		m.y = r3
+		s = th.Vf2{o, gs * r2}
+	}
+
+	const speed = 0.008
+	m = m.mul(th.Vf2{speed, speed})
+
+	b.motion = m
+	b.start = s
+	b.p = s
+}
+
+fn reset*() {
+	if game.stageCfg.sineCount == 0 {
+		return
+	}
+
+	bullets = make([]SineBullet, game.stageCfg.sineCount)
+	scn = make([]^ent.Ent, game.stageCfg.sineCount)
+	
+	for i,e in scn {
+		scn[i] = new(ent.Ent)
+		e = scn[i]
+		e^ = ent.mk(image.Image{0}, th.Transform{s: th.Vf2{1, 1}})
+		e.r = rect.mk(0, 0, 2, 2)
+		e.c = global.darkColor
+		bullets[i].e = e
+		bullets[i].gen()
+	}
+}
+
+fn init*() {
+
+}
+
+fn handle*() {
+	if game.stageCfg.sineCount == 0 {
+		return
+	}
+
+	for i,b in bullets {
+		d := b.start.distanceTo(b.p)
+		if d > game.size * 1.30 {
+			bullets[i].gen()
+			continue
+		}
+
+		off := sin(th.time / 200) * game.stageCfg.waveSize
+		if b.motion.x != 0 {
+			bullets[i].p.x += b.motion.x * th.delta
+			bullets[i].p.y = b.start.y + off
+		} else {
+			bullets[i].p.y += b.motion.y * th.delta
+			bullets[i].p.x = b.start.x + off
+		}
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	if game.stageCfg.sineCount == 0 {
+		return
+	}
+
+	for b in bullets {
+		b.e.t.p = game.toWorld(b.p.rnd())
+		b.e.draw(cam)
+	}
+}

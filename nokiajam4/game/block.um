@@ -1,0 +1,84 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"std.um"
+	"rect.um"
+	"image.um"
+	"audio.um"
+
+	"game.um"
+	"../noksnd.um"
+	"../global.um"
+)
+
+type Block* = struct {
+	e: ^ent.Ent
+	start: int
+}
+
+const (
+	blinkTime* = 1000
+	keepTime = 1000
+)
+
+var (
+	blocks*: []Block
+	scn*: []^ent.Ent
+
+	lastSpawn*: int
+
+	spawnSnd: audio.Sound
+)
+
+fn reset*() {
+	blocks = []Block{}
+	scn = []^ent.Ent{}
+}
+
+fn init*() {
+	spawnSnd = audio.load("sfx/block.wav")
+	printf("block.wav: %s\n", repr(spawnSnd.validate()))
+	noksnd.addSound(spawnSnd)
+	spawnSnd.vol(0.2)
+}
+
+fn spawn*() {
+	p := th.Vf2{std.rand()%game.size, std.rand()%game.size}
+	s := th.Vf2{std.rand()%5 + 4, std.rand()%5 + 4}
+
+	e := new(ent.Ent)
+	e^ = ent.mk(image.Image{0}, th.Transform{
+		s: th.Vf2{1, 1},
+		p: game.toWorld(p)})
+	e.r = rect.mk(0, 0, s.x, s.y)
+	e.c = global.darkColor
+
+	blocks = append(blocks, Block{e: e, start: th.time})
+	scn = append(scn, e)
+
+	noksnd.play(spawnSnd)
+}
+
+fn handle*() {
+	if th.time - lastSpawn > game.stageCfg.blockInterval && std.frand() <= game.stageCfg.blockChance {
+		spawn()
+		lastSpawn = th.time
+	}
+
+	for i,b in blocks {
+		if th.time - b.start > blinkTime + keepTime {
+			blocks = delete(blocks, i)
+			scn = delete(scn, i)
+			break
+		}
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	for b in blocks {
+		if th.time - b.start > blinkTime || std.rand()/50%2 == 0 {
+			b.e.draw(cam)
+		}
+	}
+}

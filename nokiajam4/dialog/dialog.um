@@ -1,0 +1,92 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"audio.um"
+	"input.um"
+	"signal.um"
+	"canvas.um"
+	
+	"../scene.um"
+	"../global.um"
+	"../noksnd.um"
+)
+
+const (
+	spacing = 100
+	maxChars = (78/6) * (42/6)
+)
+
+var (
+	text: str
+
+	lastChar: int
+	realText: []char
+	wait: int
+
+	part: int
+	cursor: int
+	choice: int
+
+	toneSnd: audio.Sound
+)
+
+fn onStagePass(ctx: interface{}) {
+	text = str(ctx)
+}
+
+fn reset*() {
+	cursor = 0
+	choice = 0
+	realText = []char{}
+}
+
+fn handle*()
+fn draw*(cam: rect.Rect)
+
+fn init*() {
+	scene.add(reset, handle, draw)
+	signal.register("stage_pass", onStagePass)
+
+	toneSnd = audio.load("sfx/tone.wav")
+	printf("tone.wav: %s\n", repr(toneSnd.validate()))
+	noksnd.addSound(toneSnd)
+	toneSnd.vol(0.2)
+}
+
+fn move() {
+	if cursor >= len(text) {
+		return
+	}
+
+	noksnd.play(toneSnd)
+
+	realText = append(realText, text[cursor])
+	cursor++
+	if len(realText) > maxChars {
+		realText = slice(realText, maxChars/4 * 3)
+	}
+}
+
+fn handle*() {
+	if th.time - lastChar > wait + spacing {
+		move()
+		lastChar = th.time
+	}
+
+	if input.isPressed(input.key_down) {
+		scene.change(scene.menuScn)
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	p := th.Vf2{1, 1}
+	for i,c in realText {
+		canvas.drawText(str(c), p, global.lightColor, 1)
+		p.x += 6
+		if p.x >= 84 - 6 {
+			p.x = 1
+			p.y += 6
+		}
+	}
+}

@@ -1,0 +1,59 @@
+
+import (
+	"th.um"
+	"rect.um"
+)
+
+type Scene* = struct {
+	reseter: fn()
+	handler: fn()
+	drawer: fn(cam: rect.Rect)
+}
+
+const (
+	gameScn* = 0
+	gameOverScn*
+	dialogScn*
+	menuScn*
+)
+
+var (
+	state: int = -1 // -1 is switching
+	target: int
+
+	scenes: []Scene
+
+	changeStart: int
+)
+
+fn init*() {
+	scenes = []Scene{}
+}
+
+fn add*(r, h: fn(), d: fn(cam: rect.Rect)) {
+	scenes = append(scenes, Scene{r, h, d})
+}
+
+fn change*(tgt: int) {
+	target = tgt
+	state = -1
+
+	changeStart = th.time
+}
+
+fn handle*() {
+	if state == -1 {
+		state = target
+		scenes[state].reseter()
+		return
+	}
+	scenes[state].handler()
+}
+
+fn draw*(cam: rect.Rect) {
+	if state == -1 {
+		return
+	}
+
+	scenes[state].drawer(cam)
+}

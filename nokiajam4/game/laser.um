@@ -1,0 +1,123 @@
+
+import (
+	"th.um"
+	"std.um"
+	"ent.um"
+	"rect.um"
+	"audio.um"
+	"image.um"
+	"canvas.um"
+
+	"game.um"
+	"../global.um"
+	"../noksnd.um"
+)
+
+type Laser = struct {
+	spawn: int
+	e: ^ent.Ent
+	p: th.Vf2
+}
+
+const (
+	blinkTime = 1200
+	shootTime = 1000
+)
+
+var (
+	lasers*: []Laser
+	scn*: []^ent.Ent
+	lastFire: int
+
+	baseImage: image.Image
+
+	playerPos*: th.Vf2
+	
+	shootSnd*: audio.Sound
+)
+
+fn reset*() {
+	lasers = []Laser{}
+	scn = []^ent.Ent{}
+}
+
+fn init*() {
+	baseImage = image.load("gfx/laserBase.png")
+	printf("laserBase.png: %s\n", repr(baseImage.validate()))
+
+	shootSnd = audio.load("sfx/laser.wav")
+	printf("laser.wav: %s\n", repr(shootSnd.validate()))
+	noksnd.addSound(shootSnd)
+	shootSnd.vol(0.4)
+}
+
+fn spawn*() {
+	p := th.Vf2{std.rand()%game.size, std.rand()%game.size}
+	r := p.angleTo(playerPos) + 180
+	l := th.Vf2{game.size, game.size}.mag()
+
+	e := new(ent.Ent)
+	e^ = ent.mk(image.Image{0}, th.Transform{
+		p: game.toWorld(p),
+		s: th.Vf2{1, 1},
+		r: r})
+	e.c = th.white
+	e.r = rect.mk(0, 0, 1, 1)
+	scn = append(scn, e)
+	lasers = append(lasers, Laser{
+		spawn: th.time,
+		e: e,
+		p: p})
+
+	noksnd.play(shootSnd)
+}
+
+fn handle*() {
+	if th.time - lastFire >= game.stageCfg.laserFrequency &&
+	   std.frand() < game.stageCfg.laserChance {
+		spawn()
+		lastFire = th.time
+	}
+
+	for i,l in lasers {
+		if th.time - l.spawn >= blinkTime + shootTime {
+			lasers = delete(lasers, i)
+			scn = delete(scn, i)
+			break
+		}
+	}
+}
+
+fn (l: ^Laser) draw(cam: rect.Rect) {
+	if th.time - l.spawn > blinkTime || th.time/50%2 == 0 {
+		baseImage.draw(th.Transform{
+			p: game.toScreen(l.p).sub(th.Vf2{1, 1}),
+			s: th.Vf2{1, 1}}, th.white)
+	}
+
+	if th.time - l.spawn > blinkTime {
+		l.e.r.w = 100
+		p := l.p
+		m := th.Vf2{1, 0}.rotated(th.Vf2{}, l.e.t.r).norm()
+
+		for i:=0; p.distanceTo(l.e.t.p) < l.e.r.w; i++ {
+			p2 := p.add(m)
+			rp := p.rnd()
+			rp2 := p2.rnd()
+			if rp.x != rp2.x || rp.y != rp2.y {
+				rp2 = game.toScreen(rp2)
+				if (th.time/200+i)%4 != 0 {
+					canvas.drawRect(global.darkColor, rect.mk(rp2.x, rp2.y, 1, 1))
+				}
+			}
+
+			p = p2
+		}
+	}
+}
+
+fn draw*(cam: rect.Rect) {
+	for l in lasers {
+		l.draw(cam)
+	}
+}
