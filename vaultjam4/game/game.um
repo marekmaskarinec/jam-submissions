@@ -1,0 +1,74 @@
+
+import (
+	"th.um"
+	"ent.um"
+)
+
+type Building* = interface {
+	init(pos: th.Vf2): ^ent.Ent
+	reset()
+	handle()
+	draw()
+
+	refill(amount: int)
+}
+
+type Enemy* = interface {
+	init(pos: th.Vf2)
+	reset()
+	handle()
+	draw()
+
+	getEnt(): ^ent.Ent
+	damage(amount: int)
+	alive(): bool
+}
+
+var (
+	bdgs*: []Building
+	bdgsScn*: []^ent.Ent
+
+	enms*: []Enemy
+	enmsScn*: []^ent.Ent
+)
+
+fn init*() {
+	bdgs = []Building{}
+	bdgsScn = []^ent.Ent{}
+
+	enms = []Enemy{}
+	enmsScn = []^ent.Ent{}
+}
+
+fn reset*() {
+	for i:=0; i < len(bdgs); i++ {
+		bdgs[i].reset()
+	}
+
+	for i:=0; i < len(enms); i++ {
+		enms[i].reset()
+	}
+}
+
+fn handle*() {
+	for i:=0; i < len(bdgs); i++ {
+		bdgs[i].handle()
+	}
+
+	for i:=0; i < len(enms); i++ {
+		enms[i].handle()
+		if !enms[i].alive() {
+			enms = delete(enms, i)
+		}
+	}
+}
+
+fn draw*() {
+	for i:=0; i < len(bdgs); i++ {
+		bdgs[i].draw()
+	}
+
+	for i:=0; i < len(enms); i++ {
+		enms[i].draw()
+	}
+}

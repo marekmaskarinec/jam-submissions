@@ -1,0 +1,26 @@
+
+import (
+	"th.um"
+	"rect.um"
+	"window.um"
+
+	"logger.um"
+	"scene.um"
+	"global.um"
+	"game/gameloop.um"
+)
+
+fn main() {
+	window.setup("td game", 192, 108)
+	global.cam = rect.mk(0, 0, 192, 108)
+
+	scene.init()
+	gameloop.init()
+
+	logger.msg("running")
+
+	for window.cycle(global.cam) {
+		scene.handle()
+		scene.draw()
+	}
+}

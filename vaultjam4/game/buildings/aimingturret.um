@@ -1,0 +1,127 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"rect.um"
+	"image.um"
+
+	"../game.um"
+	"../gproj.um"
+	"../../global.um"
+	"../../logger.um"
+)
+
+const (
+	maxAmmo = 20
+	fireInterval = 500
+	barrelLength = 5
+)
+
+var (
+	baseImg: image.Image = image.Image{}
+	barrelImg: image.Image = image.Image{}
+	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
+)
+
+fn init*() {
+	baseImg = image.load("gfx/turret-base.png")
+	barrelImg = image.load("gfx/aiming-turret-barrel.png")
+}
+
+type AimingTurret* = struct {
+	e: ^ent.Ent
+	tgt: ^game.Enemy
+	projectiles: []gproj.Gproj
+	agl: th.fu
+
+	lastFire: int
+	fireInterval: int
+	ammo: int
+}
+
+fn (atr: ^AimingTurret) init*(pos: th.Vf2): ^ent.Ent {
+	atr.e = new(ent.Ent)
+	atr.e^ = ent.mk(baseImg, trans)
+	atr.e.c = th.white
+
+	atr.fireInterval = fireInterval
+	atr.projectiles = []gproj.Gproj{}
+
+	return atr.e
+}
+
+fn (atr: ^AimingTurret) reset*() {
+	atr.ammo = maxAmmo
+	atr.e.t.r = 0
+}
+
+fn (atr: ^AimingTurret) barrelHeadPos(): th.Vf2 {
+	center := th.Vf2{atr.e.t.p.x + atr.e.r.w/2, atr.e.t.p.y + atr.e.r.h/2}
+	head := center
+	head.x -= barrelLength
+	return head.rotated(center, atr.agl)
+}
+
+fn (atr: ^AimingTurret) shoot*() {
+	atr.projectiles = append(atr.projectiles, gproj.mk(atr.barrelHeadPos(), atr.tgt))
+	atr.lastFire = th.time
+}
+
+fn (atr: ^AimingTurret) findEnemy(): ^game.Enemy {
+	dist := -1.0
+	index := -1
+	for i:=0; i < len(game.enms); i++ {
+		dist2 := atr.e.t.p.distanceTo(game.enms[i].getEnt().t.p)
+		if dist < 0 || dist2 < dist {
+			dist = dist2
+			index = i
+		}
+	}
+
+	if index < 0 {
+		return null
+	}
+	return &game.enms[index]
+}
+
+fn (atr: ^AimingTurret) handle*() {
+	if atr.tgt != null {
+		atr.agl = atr.e.t.p.angleTo(atr.tgt.getEnt().t.p)
+
+		if th.time - atr.lastFire >= atr.fireInterval {
+			atr.shoot()
+		}
+
+		if !atr.tgt.alive() {
+			atr.tgt = null
+		}
+
+	} else {
+		atr.tgt = atr.findEnemy()
+		if atr.tgt == null { return }
+	}
+
+	for i:=0; i < len(atr.projectiles) && i >= 0; i++ {
+		if atr.projectiles[i].handle() {
+			atr.projectiles = delete(atr.projectiles, i)
+			i--
+		}
+	}
+}
+
+fn (atr: ^AimingTurret) draw*() {
+	atr.e.draw(global.cam)
+	barrelImg.draw(th.Transform{
+		p: global.cam.toScreen(atr.e.t.p),
+		s: th.Vf2{ 1, 1 },
+		o: th.Vf2{ atr.e.r.w/2, atr.e.r.h/2 },
+		r: atr.agl - 180})
+
+	for i:=0; i < len(atr.projectiles); i++ {
+		atr.projectiles[i].draw()
+	}
+}
+
+fn (atr: ^AimingTurret) refill*(amount: int) {
+
+}

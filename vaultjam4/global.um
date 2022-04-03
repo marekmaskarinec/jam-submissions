@@ -1,0 +1,23 @@
+
+import (
+	"th.um"
+	"ui.um"
+	"rect.um"
+)
+
+const (
+	tileSize* = 15
+)
+
+var (
+	cam*: rect.Rect
+	ren*: ui.TextRenderer
+	boldRen*: ui.TextRenderer
+
+	gameScnId*: int
+)
+
+fn init*() {
+	ren = ui.PixelFont{}
+	boldRen = ui.PixelFont{}
+}

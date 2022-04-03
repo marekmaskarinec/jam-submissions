@@ -1,0 +1,13 @@
+#!/bin/sh
+
+rm -r /tmp/yem-*
+mkdir -p /tmp/yem-windows/tophat.dat /tmp/yem-linux/tophat.dat
+cp -r ./* /tmp/yem-windows/tophat.dat
+cp -r ./* /tmp/yem-linux/tophat.dat
+
+cp ~/dev/tophat/tophat.exe /tmp/yem-windows/you_empower_me.exe
+cp ~/dev/tophat/tophat /tmp/yem-linux/you_empower_me
+
+cd /tmp
+zip -r ~/dev/jam-submissions/nokiajam4/yem-linux.zip yem-linux/*
+zip -r ~/dev/jam-submissions/nokiajam4/yem-windows.zip yem-windows/*

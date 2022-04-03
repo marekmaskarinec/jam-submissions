@@ -1,0 +1,64 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"rect.um"
+	"image.um"
+
+	"game.um"
+	"../global.um"
+)
+
+const (
+	speed = 0.1
+)
+
+var (
+	img: image.Image = image.Image{}
+	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
+)
+
+type Gproj* = struct {
+	target: ^game.Enemy
+	e: ^ent.Ent
+	startPos: th.Vf2
+	motion: th.Vf2
+}
+
+fn mk*(pos: th.Vf2, target: ^game.Enemy): Gproj {
+	gpr := Gproj{}
+	gpr.target = target
+	gpr.e = new(ent.Ent)
+	gpr.e^ = ent.mk(img, trans)
+	gpr.e.c = th.yellow
+	gpr.e.r = rect.mk(0, 0, 3, 3)
+	gpr.e.t.p = pos
+	
+	gpr.startPos = pos
+
+	tpos := target.getEnt().t.p
+	agl := pos.angleTo(tpos)
+	gpr.e.t.r = agl
+	gpr.motion = tpos.sub(pos).div(th.Vf2{tpos.distanceTo(pos), tpos.distanceTo(pos)})
+
+	return gpr
+}
+
+fn (gpr: ^Gproj) handle*(): bool {
+	gpr.e.t.p = gpr.e.t.p.add(gpr.motion.mul(th.Vf2{th.delta, th.delta}).mul(th.Vf2{speed, speed}))
+
+	if gpr.e.t.p.distanceTo(gpr.startPos) > global.cam.w {
+		return true
+	}
+
+	if len(gpr.e.getColl([]^ent.Ent{gpr.target.getEnt()}, 1)) > 0 {
+		gpr.target.damage(1) // TODO: setable damage
+		return true
+	}
+
+	return false
+}
+
+fn (gpr: ^Gproj) draw*() {
+	gpr.e.draw(global.cam)
+}

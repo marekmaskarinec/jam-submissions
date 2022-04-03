@@ -1,0 +1,54 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"rect.um"
+	"image.um"
+
+	"../../logger.um"
+	"../../global.um"
+)
+
+var (
+	img: image.Image = image.Image{}
+	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
+)
+
+type Enemy* = struct {
+	e: ^ent.Ent
+	hp: int	 
+}
+
+fn (enm: ^Enemy) init(pos: th.Vf2) {
+	enm.e = new(ent.Ent)
+	enm.e^ = ent.mk(img, trans)
+	enm.e.c = th.red
+	enm.e.r = rect.mk(0, 0, global.tileSize, global.tileSize)
+	enm.e.t.p = pos
+
+	enm.hp = 10
+}
+
+fn (enm: ^Enemy) reset() {
+	enm.hp = 10
+}
+
+fn (enm: ^Enemy) handle() {
+	
+}
+
+fn (enm: ^Enemy) draw() {
+	enm.e.draw(global.cam)
+}
+
+fn (enm: ^Enemy) getEnt(): ^ent.Ent {
+	return enm.e
+}
+
+fn (enm: ^Enemy) damage(amount: int) {
+	enm.hp -= amount
+}
+
+fn (enm: ^Enemy) alive(): bool {
+	return enm.hp > 0
+}

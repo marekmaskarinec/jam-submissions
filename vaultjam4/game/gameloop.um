@@ -1,0 +1,42 @@
+
+import (
+	"th.um"
+
+	"game.um"
+	"../scene.um"
+	"../global.um"
+	"enemies/enemy.um"
+	"buildings/aimingturret.um"
+)
+
+fn reset*() {
+	game.reset()
+}
+
+fn handle*() {
+	game.handle()
+}
+
+fn draw*() {
+	game.draw()
+}
+
+fn init*() {
+	game.init()
+	aimingturret.init()
+
+	tur := new(aimingturret.AimingTurret)
+	game.bdgsScn = append(game.bdgsScn, tur.init(th.Vf2{}))
+	game.bdgs = append(game.bdgs, tur)
+
+	enm := new(enemy.Enemy)
+	enm.init(th.Vf2{40, 40})
+	game.enmsScn = append(game.enmsScn, enm.getEnt())
+	game.enms = append(game.enms, enm)
+
+	global.gameScnId = scene.Scene{
+		name: "game scene",
+		reset: reset,
+		handle: handle,
+		draw: draw}.register()
+}

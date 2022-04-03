@@ -49,6 +49,8 @@ fn init*() {
 	printf("laser.wav: %s\n", repr(shootSnd.validate()))
 	noksnd.addSound(shootSnd)
 	shootSnd.vol(0.4)
+
+	shootSnd.play()
 }
 
 fn spawn*() {
