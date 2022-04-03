@@ -37,14 +37,23 @@ fn mk*(pos: th.Vf2, target: ^game.Enemy): Gproj {
 	gpr.startPos = pos
 
 	tpos := target.getEnt().t.p
-	agl := pos.angleTo(tpos)
-	gpr.e.t.r = agl
-	gpr.motion = tpos.sub(pos).div(th.Vf2{tpos.distanceTo(pos), tpos.distanceTo(pos)})
 
 	return gpr
 }
 
 fn (gpr: ^Gproj) handle*(): bool {
+	tent := gpr.target.getEnt()
+	tpos := tent.t.p.add(th.Vf2{tent.r.w/2, tent.r.h/2})
+	dist := tpos.distanceTo(gpr.e.t.p)
+	if dist == 0 {
+		return false
+	}
+
+	agl := gpr.e.t.p.angleTo(tpos)
+	gpr.e.t.r = agl
+
+	gpr.motion = tpos.sub(gpr.e.t.p).
+		div(th.Vf2{dist, dist})
 	gpr.e.t.p = gpr.e.t.p.add(gpr.motion.mul(th.Vf2{th.delta, th.delta}).mul(th.Vf2{speed, speed}))
 
 	if gpr.e.t.p.distanceTo(gpr.startPos) > global.cam.w {

@@ -2,6 +2,16 @@
 import (
 	"th.um"
 	"ent.um"
+	"std.um"
+	"atlas.um"
+	"image.um"
+	"tilemap.um"
+
+	"../global.um"
+)
+
+const (
+	floorTileCount = 6
 )
 
 type Building* = interface {
@@ -24,13 +34,60 @@ type Enemy* = interface {
 	alive(): bool
 }
 
+type Env* = struct {
+	path: []th.Vf2
+	map: tilemap.Tilemap
+}
+
 var (
 	bdgs*: []Building
 	bdgsScn*: []^ent.Ent
 
 	enms*: []Enemy
 	enmsScn*: []^ent.Ent
+
+	tileset: atlas.Atlas
+	env*: Env
 )
+
+fn (e: ^Env) init*(pts: []th.Vf2, dm: th.Vf2) {
+	cells := make([]th.uu, trunc(dm.x * dm.y))
+	
+	for i:=0; i < len(cells); i++ {
+		cells[i] = std.rand()%floorTileCount + 1
+	}
+
+	pathCells := make([]th.uu, trunc(dm.x * dm.y))
+	for i:=0; i < len(pts) - 1; i++ {
+		mot := pts[i+1].sub(pts[i])
+		mot.x /= pts[i].distanceTo(pts[i+1])
+		mot.y /= pts[i].distanceTo(pts[i+1])
+		for p:=pts[i]; p.x != pts[i+1].x || p.y != pts[i+1].y; p = p.add(mot) {
+			pathCells[trunc(p.y * dm.x + p.x)] = 1
+		}
+	}
+
+	cfg := make([]th.uu, 16)
+	idx := floorTileCount + 1
+	cfg[tilemap.left | tilemap.bot                                ] = idx + 0
+	cfg[tilemap.top  | tilemap.right                              ] = idx + 1
+	cfg[tilemap.left | tilemap.top                                ] = idx + 2
+	cfg[tilemap.left | tilemap.right                              ] = idx + 3
+	cfg[tilemap.top  | tilemap.bot                                ] = idx + 4
+	cfg[tilemap.bot  | tilemap.right                              ] = idx + 5
+	cfg[tilemap.top  | tilemap.bot  | tilemap.left | tilemap.right] = idx + 6
+	cfg[tilemap.bot  | tilemap.left | tilemap.right               ] = idx + 7
+	cfg[0                                                         ] = idx + 7
+
+	e.map = tilemap.mk(cells, trunc(dm.x), tileset, 1)
+	e.map.autotile(pathCells, cfg, 1)
+
+	e.path = pts
+	for i:=0; i < len(e.path); i++ {
+		e.path[i].x *= global.tileSize
+		e.path[i].y *= global.tileSize
+	}
+}
 
 fn init*() {
 	bdgs = []Building{}
@@ -38,6 +95,8 @@ fn init*() {
 
 	enms = []Enemy{}
 	enmsScn = []^ent.Ent{}
+
+	tileset = atlas.mk(image.load("gfx/ground-tiles.png"), th.Vf2{6, 3})
 }
 
 fn reset*() {
@@ -64,6 +123,8 @@ fn handle*() {
 }
 
 fn draw*() {
+	env.map.draw(global.cam)
+
 	for i:=0; i < len(bdgs); i++ {
 		bdgs[i].draw()
 	}

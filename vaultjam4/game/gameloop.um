@@ -34,6 +34,10 @@ fn init*() {
 	game.enmsScn = append(game.enmsScn, enm.getEnt())
 	game.enms = append(game.enms, enm)
 
+	game.env.init([]th.Vf2{
+		th.Vf2{0, 0}, th.Vf2{6, 0},
+		th.Vf2{6, 6}, th.Vf2{0, 6}}, th.Vf2{10, 10})
+
 	global.gameScnId = scene.Scene{
 		name: "game scene",
 		reset: reset,

@@ -4,9 +4,15 @@ import (
 	"ent.um"
 	"rect.um"
 	"image.um"
+	"signal.um"
 
+	"../game.um"
 	"../../logger.um"
 	"../../global.um"
+)
+
+const (
+	speed = 0.01
 )
 
 var (
@@ -16,6 +22,7 @@ var (
 
 type Enemy* = struct {
 	e: ^ent.Ent
+	pos: th.fu
 	hp: int	 
 }
 
@@ -26,7 +33,7 @@ fn (enm: ^Enemy) init(pos: th.Vf2) {
 	enm.e.r = rect.mk(0, 0, global.tileSize, global.tileSize)
 	enm.e.t.p = pos
 
-	enm.hp = 10
+	enm.hp = 1000
 }
 
 fn (enm: ^Enemy) reset() {
@@ -34,7 +41,18 @@ fn (enm: ^Enemy) reset() {
 }
 
 fn (enm: ^Enemy) handle() {
-	
+	if trunc(enm.pos) + 1 >= len(game.env.path) {
+		enm.pos = 0
+		signal.emit("path_finish", null)
+	}
+
+	b := game.env.path[trunc(enm.pos)]
+	e := game.env.path[trunc(enm.pos) + 1]
+	enm.e.t.p = th.Vf2{
+		b.x + (e.x-b.x) * (enm.pos - trunc(enm.pos)),
+		b.y + (e.y-b.y) * (enm.pos - trunc(enm.pos))}
+
+	enm.pos += speed * th.delta / b.distanceTo(e)
 }
 
 fn (enm: ^Enemy) draw() {

@@ -12,7 +12,7 @@ import (
 
 fn main() {
 	window.setup("td game", 192, 108)
-	global.cam = rect.mk(0, 0, 192, 108)
+	global.cam = rect.mk(96, 54, 192, 108)
 
 	scene.init()
 	gameloop.init()
