@@ -43,6 +43,7 @@ fn (atr: ^AimingTurret) init*(pos: th.Vf2): ^ent.Ent {
 	atr.e = new(ent.Ent)
 	atr.e^ = ent.mk(baseImg, trans)
 	atr.e.c = th.white
+	atr.e.t.p = pos
 
 	atr.fireInterval = fireInterval
 	atr.projectiles = []gproj.Gproj{}

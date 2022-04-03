@@ -1,6 +1,7 @@
 
 import (
 	"th.um"
+	"std.um"
 	"ent.um"
 	"rect.um"
 	"image.um"
@@ -11,29 +12,58 @@ import (
 	"../../global.um"
 )
 
-const (
-	speed = 0.01
-)
+type Cfg* = struct {
+	img: image.Image
+	speed: th.fu
+	hp: int
+}
 
 var (
-	img: image.Image = image.Image{}
 	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
+	cfgs: []Cfg
 )
+
+fn init*() {
+	cfgs = []Cfg{
+		Cfg{
+			img: image.load("gfx/enemies/enemy_1.png"),
+			speed: 0.1,
+			hp: 1},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_2.png"),
+			speed: 0.05,
+			hp: 2},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_3.png"),
+			speed: 0.01,
+			hp: 5},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_4.png"),
+			speed: 0.01,
+			hp: 10},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_4.png"),
+			speed: 0.004,
+			hp: 25}}
+}
 
 type Enemy* = struct {
 	e: ^ent.Ent
 	pos: th.fu
-	hp: int	 
+	hp: int
+	speed: th.fu
 }
 
 fn (enm: ^Enemy) init(pos: th.Vf2) {
+	cfg := cfgs[std.rand()%len(cfgs)]
+
 	enm.e = new(ent.Ent)
-	enm.e^ = ent.mk(img, trans)
-	enm.e.c = th.red
+	enm.e^ = ent.mk(cfg.img, trans)
 	enm.e.r = rect.mk(0, 0, global.tileSize, global.tileSize)
 	enm.e.t.p = pos
 
-	enm.hp = 1000
+	enm.speed = cfg.speed
+	enm.hp = cfg.hp
 }
 
 fn (enm: ^Enemy) reset() {
@@ -52,7 +82,7 @@ fn (enm: ^Enemy) handle() {
 		b.x + (e.x-b.x) * (enm.pos - trunc(enm.pos)),
 		b.y + (e.y-b.y) * (enm.pos - trunc(enm.pos))}
 
-	enm.pos += speed * th.delta / b.distanceTo(e)
+	enm.pos += enm.speed * th.delta / b.distanceTo(e)
 }
 
 fn (enm: ^Enemy) draw() {

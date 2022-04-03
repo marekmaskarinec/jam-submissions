@@ -1,0 +1,42 @@
+
+import (
+	"signal.um"
+
+	"game.um"
+	"enemy.um"
+)
+
+var (
+	score: int
+)
+
+fn reset*() {
+	score = 0
+}
+
+fn init*() {
+	reset()
+
+	signal.register("enemy_kill", signal.Callback{
+		score++
+	})
+}
+
+fn enemyLimit(): int {
+	return trunc(0.2 * score + 1)
+}
+
+fn spawn() {
+	enm := new(enemy.Enemy)
+	enm.init(game.env.path[0])
+	game.enmsScn = append(game.enmsScn, enm.getEnt())
+	game.enms = append(game.enms, enm)
+}
+
+fn handle*() {
+	for len(game.enms) < enemyLimit() {
+		spawn()
+	}
+}
+
+fn draw*() { }

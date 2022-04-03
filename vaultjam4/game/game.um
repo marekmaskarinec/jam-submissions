@@ -5,6 +5,7 @@ import (
 	"std.um"
 	"atlas.um"
 	"image.um"
+	"signal.um"
 	"tilemap.um"
 
 	"../global.um"
@@ -117,7 +118,9 @@ fn handle*() {
 	for i:=0; i < len(enms); i++ {
 		enms[i].handle()
 		if !enms[i].alive() {
+			signal.emit("enemy_kill", i)
 			enms = delete(enms, i)
+			enmsScn = delete(enmsScn, i)
 		}
 	}
 }
