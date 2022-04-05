@@ -68,8 +68,11 @@ fn (e: ^Env) init*(pts: []th.Vf2, dm: th.Vf2) {
 		}
 	}
 
-	cfg := make([]th.uu, 16)
 	idx := floorTileCount + 1
+	cfg := make([]th.uu, 16)
+	for i:=0; i < 16; i++ {
+		cfg[i] = idx
+	}
 	cfg[tilemap.left | tilemap.bot                                ] = idx + 0
 	cfg[tilemap.top  | tilemap.right                              ] = idx + 1
 	cfg[tilemap.left | tilemap.top                                ] = idx + 2
@@ -78,7 +81,6 @@ fn (e: ^Env) init*(pts: []th.Vf2, dm: th.Vf2) {
 	cfg[tilemap.bot  | tilemap.right                              ] = idx + 5
 	cfg[tilemap.top  | tilemap.bot  | tilemap.left | tilemap.right] = idx + 6
 	cfg[tilemap.bot  | tilemap.left | tilemap.right               ] = idx + 7
-	cfg[0                                                         ] = idx + 7
 
 	e.map = tilemap.mk(cells, trunc(dm.x), tileset, 1)
 	e.map.autotile(pathCells, cfg, 1)

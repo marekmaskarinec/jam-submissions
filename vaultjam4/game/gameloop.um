@@ -34,6 +34,9 @@ fn init*() {
 	tur := new(aimingturret.AimingTurret)
 	game.bdgsScn = append(game.bdgsScn, tur.init(th.Vf2{45, 15}))
 	game.bdgs = append(game.bdgs, tur)
+	tur = new(aimingturret.AimingTurret)
+	game.bdgsScn = append(game.bdgsScn, tur.init(th.Vf2{60, 75}))
+	game.bdgs = append(game.bdgs, tur)
 
 	game.env.init([]th.Vf2{
 		th.Vf2{0, 0}, th.Vf2{6, 0},

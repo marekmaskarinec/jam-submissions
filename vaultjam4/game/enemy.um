@@ -59,8 +59,8 @@ fn (enm: ^Enemy) init(pos: th.Vf2) {
 
 	enm.e = new(ent.Ent)
 	enm.e^ = ent.mk(cfg.img, trans)
-	enm.e.r = rect.mk(0, 0, global.tileSize, global.tileSize)
 	enm.e.t.p = pos
+	enm.e.t.o = th.Vf2{enm.e.r.w/2, enm.e.r.h/2}
 
 	enm.speed = cfg.speed
 	enm.hp = cfg.hp
@@ -83,6 +83,10 @@ fn (enm: ^Enemy) handle() {
 		b.y + (e.y-b.y) * (enm.pos - trunc(enm.pos))}
 
 	enm.pos += enm.speed * th.delta / b.distanceTo(e)
+	enm.e.t.r = enm.e.t.p.angleTo(e) + 90
+	/*if enm.e.t.r >= 180 {
+		enm.e.t.r -= 180
+	}*/
 }
 
 fn (enm: ^Enemy) draw() {
