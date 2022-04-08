@@ -10,13 +10,17 @@ import (
 )
 
 const (
-	speed = 0.1
+	speed = 0.2
 )
 
 var (
 	img: image.Image = image.Image{}
 	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
 )
+
+fn init*() {
+	img = image.load("gfx/turret-projectile.png")
+}
 
 type Gproj* = struct {
 	target: ^game.Enemy
@@ -30,13 +34,12 @@ fn mk*(pos: th.Vf2, target: ^game.Enemy): Gproj {
 	gpr.target = target
 	gpr.e = new(ent.Ent)
 	gpr.e^ = ent.mk(img, trans)
-	gpr.e.c = th.yellow
 	gpr.e.r = rect.mk(0, 0, 3, 3)
 	gpr.e.t.p = pos
 	
 	gpr.startPos = pos
 
-	tpos := target.getEnt().t.p
+	tpos := target.getEnt().t.p.add(th.Vf2{target.getEnt().r.w/2, target.getEnt().r.h/2})
 
 	return gpr
 }
@@ -54,14 +57,18 @@ fn (gpr: ^Gproj) handle*(): bool {
 
 	gpr.motion = tpos.sub(gpr.e.t.p).
 		div(th.Vf2{dist, dist})
-	gpr.e.t.p = gpr.e.t.p.add(gpr.motion.mul(th.Vf2{th.delta, th.delta}).mul(th.Vf2{speed, speed}))
 
-	if gpr.e.t.p.distanceTo(gpr.startPos) > global.cam.w {
-		return true
+	const detail = 10
+	for i:=0; i < detail; i++ {
+		gpr.e.t.p = gpr.e.t.p.add(gpr.motion.mul(th.Vf2{th.delta, th.delta}).mul(th.Vf2{speed/detail, speed/detail}))
+  
+		if len(gpr.e.getColl([]^ent.Ent{gpr.target.getEnt()}, 1)) > 0 {
+			gpr.target.damage(1) // TODO: setable damage
+			return true
+		}
 	}
 
-	if len(gpr.e.getColl([]^ent.Ent{gpr.target.getEnt()}, 1)) > 0 {
-		gpr.target.damage(1) // TODO: setable damage
+	if gpr.e.t.p.distanceTo(gpr.startPos) > global.cam.w {
 		return true
 	}
 

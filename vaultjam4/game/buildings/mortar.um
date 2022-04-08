@@ -1,0 +1,160 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"std.um"
+	"atlas.um"
+	"image.um"
+
+	"../game.um"
+	"../../global.um"
+	"../../animator.um"
+)
+
+const (
+	maxAmmo = 20
+	fireInterval = 1000
+	projSpeed = 0.4
+	projRadius = global.tileSize
+	projDamage = 2
+)
+
+var (
+	baseImg: image.Image
+	barrelImg: image.Image
+	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
+	barrelAtl: atlas.Atlas
+
+	projectileImg: image.Image
+)
+
+fn init*() {
+	baseImg = image.load("gfx/turret-base.png")
+	barrelImg = image.load("gfx/mortar.png")
+	barrelAtl = atlas.mk(barrelImg, th.Vf2{3, 1})
+
+	projectileImg = image.load("gfx/mortar-projectile.png")
+}
+
+type Projectile* = struct {
+	e: ^ent.Ent
+	tgt, sp, motion: th.Vf2
+}
+
+fn mkProjectile(sp, tgt: th.Vf2): Projectile {
+	prj := Projectile{}
+	prj.e = new(ent.Ent)
+	prj.e^ = ent.mk(projectileImg, trans)
+	prj.e.t.p = sp
+	prj.e.t.o = th.Vf2{prj.e.r.w/2, prj.e.r.h/2}
+	prj.tgt = tgt
+
+	dist := prj.e.t.p.distanceTo(prj.tgt)
+	prj.motion = prj.tgt.sub(prj.e.t.p).div(th.Vf2{dist, dist})
+	prj.sp = sp
+
+	return prj
+}
+
+fn (prj: ^Projectile) handle(): bool {
+	prj.e.t.p = prj.e.t.p.add(prj.motion.mul(th.Vf2{projSpeed, projSpeed}))
+	prj.e.t.r = prj.e.t.p.angleTo(prj.tgt) - 45
+
+	dist := prj.e.t.p.distanceTo(prj.tgt)
+	fd := prj.sp.distanceTo(prj.tgt)
+	half := fd/2
+	coefficient := 3
+	dth := dist-half
+	s := 1 + ((-dth/fd) * (dth/fd) + (half/fd) * (half/fd)) * coefficient
+	prj.e.t.s = th.Vf2{s, s}
+
+	if dist < global.tileSize/2 {
+		for i:=0; i < len(game.enms); i++ {
+			if game.enmsScn[i].t.p.distanceTo(prj.tgt) < projRadius {
+				// killing an enemy will cause another enemy to be skipped FIXME
+				game.enms[i].damage(projDamage)
+			}
+
+		}
+		return true
+	}
+
+	return false
+}
+
+fn (prj: ^Projectile) draw() {
+	prj.e.draw(global.cam)
+}
+
+type Mortar* = struct {
+	e: ^ent.Ent
+	projectiles: []Projectile
+	
+	lastFire: int
+	fireInterval: int
+	ammo: int
+	anm: animator.Anim
+}
+
+fn (mtr: ^Mortar) init(pos: th.Vf2): ^ent.Ent {
+	mtr.e = new(ent.Ent)
+	mtr.e^ = ent.mk(baseImg, trans)
+	mtr.e.t.p = pos
+
+	mtr.fireInterval = fireInterval
+	mtr.projectiles = []Projectile{}
+
+	mtr.anm = animator.Anim{
+		atl: barrelAtl,
+		min: 0,
+		max: 1,
+		fps: 5}
+
+	return mtr.e
+}
+
+fn (mtr: ^Mortar) reset*() {
+	mtr.ammo = maxAmmo
+}
+
+fn (mtr: ^Mortar) shoot*() {
+	pos := game.env.path[std.rand() % len(game.env.path)]
+	mtr.projectiles = append(mtr.projectiles, mkProjectile(mtr.e.t.p, pos))
+	mtr.anm.max = 3
+	mtr.anm.offset = th.time
+	mtr.lastFire = th.time
+}
+
+fn (mtr: ^Mortar) handle*() {
+	if th.time - mtr.lastFire >= mtr.fireInterval {
+		mtr.shoot()
+	}
+
+	for i:=0; i < len(mtr.projectiles) && i >= 0; i++ {
+		if mtr.projectiles[i].handle() {
+			mtr.projectiles = delete(mtr.projectiles, i)
+			i--
+		}
+	}
+
+	if mtr.anm.framesPlayed() >= mtr.anm.max {
+		mtr.anm.max = 1
+	}
+}
+
+fn (mtr: ^Mortar) draw*() {
+	mtr.e.draw(global.cam)
+	
+	mtr.anm.animate(th.time)
+	barrelImg.draw(th.Transform{
+		s: th.Vf2{ 1, 1 },
+		p: global.cam.toScreen(mtr.e.t.p)})
+
+	for i:=0; i < len(mtr.projectiles); i++ {
+		mtr.projectiles[i].draw()
+	}
+}
+
+fn (mtr: ^Mortar) refill*(amount: int) {
+
+}
