@@ -1,0 +1,32 @@
+
+import (
+	"th.um"
+	"particles.um"
+
+	"global.um"
+)
+
+var (
+	emitters: []particles.Emitter
+)
+
+fn addEmitter*(e: particles.Emitter) {
+	emitters = append(emitters, e)
+}
+
+fn reset*() {
+	emitters = []particles.Emitter{}
+}
+
+fn handle*() {
+}
+
+fn draw*() {
+	for i:=0; i < len(emitters); i++ {
+		emitters[i].draw(global.cam, th.time)
+	}
+}
+
+fn init*() {
+	reset()
+}

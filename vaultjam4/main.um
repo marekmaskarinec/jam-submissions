@@ -4,9 +4,10 @@ import (
 	"rect.um"
 	"window.um"
 
-	"logger.um"
 	"scene.um"
+	"logger.um"
 	"global.um"
+	"effects.um"
 	"game/gameloop.um"
 )
 
@@ -16,6 +17,7 @@ fn main() {
 
 	scene.init()
 	gameloop.init()
+	effects.init()
 
 	logger.msg("running")
 
