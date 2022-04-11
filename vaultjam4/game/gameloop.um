@@ -5,6 +5,7 @@ import (
 	"game.um"
 	"enemy.um"
 	"gproj.um"
+	"builder.um"
 	"spawner.um"
 	"../scene.um"
 	"../global.um"
@@ -15,18 +16,21 @@ import (
 
 fn reset*() {
 	game.reset()
+	builder.reset()
 	spawner.reset()
 	effects.reset()
 }
 
 fn handle*() {
 	game.handle()
+	builder.handle()
 	effects.handle()
 	spawner.handle()
 }
 
 fn draw*() {
 	game.draw()
+	builder.draw()
 	effects.draw()
 	spawner.draw()
 }
@@ -38,6 +42,7 @@ fn init*() {
 	mortar.init()
 	spawner.init()
 	aimingturret.init()
+	builder.init()
 
 	tur := new(aimingturret.AimingTurret)
 	game.bdgsScn = append(game.bdgsScn, tur.init(th.Vf2{45, 15}))
@@ -59,4 +64,6 @@ fn init*() {
 		reset: reset,
 		handle: handle,
 		draw: draw}.register()
+
+	reset()
 }

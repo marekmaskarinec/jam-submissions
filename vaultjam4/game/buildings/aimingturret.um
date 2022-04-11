@@ -20,16 +20,12 @@ const (
 )
 
 var (
-	baseImg: image.Image = image.Image{}
-	barrelImg: image.Image = image.Image{}
 	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
 	barrelAtl: atlas.Atlas
 )
 
 fn init*() {
-	baseImg = image.load("gfx/turret-base.png")
-	barrelImg = image.load("gfx/aiming-turret-barrel.png")
-	barrelAtl = atlas.mk(barrelImg, th.Vf2{3, 1})
+	barrelAtl = atlas.mk(global.turretImg, th.Vf2{3, 1})
 }
 
 type AimingTurret* = struct {
@@ -46,7 +42,7 @@ type AimingTurret* = struct {
 
 fn (atr: ^AimingTurret) init*(pos: th.Vf2): ^ent.Ent {
 	atr.e = new(ent.Ent)
-	atr.e^ = ent.mk(baseImg, trans)
+	atr.e^ = ent.mk(global.turretBaseImg, trans)
 	atr.e.c = th.white
 	atr.e.t.p = pos
 
@@ -139,7 +135,7 @@ fn (atr: ^AimingTurret) draw*() {
 	}
 
 	atr.anm.animate(th.time)
-	barrelImg.draw(th.Transform{
+	global.turretImg.draw(th.Transform{
 		p: global.cam.toScreen(atr.e.t.p),
 		s: th.Vf2{ 1, 1 },
 		o: th.Vf2{ atr.e.r.w/2, atr.e.r.h/2 },

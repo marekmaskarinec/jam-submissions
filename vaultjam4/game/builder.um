@@ -1,0 +1,200 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"lerp.um"
+	"misc.um"
+	"rect.um"
+	"atlas.um"
+	"image.um"
+	"input.um"
+	"canvas.um"
+
+	"game.um"
+	"../global.um"
+	"../animator.um"
+	"buildings/mortar.um"
+	"buildings/aimingturret.um"
+)
+
+const (
+	speed = 80
+
+	turretIdx* = 0
+	mortarIdx* = 1
+	flamethrower* = 2
+
+	menuBorder = 1
+)
+
+var (
+	e: ^ent.Ent
+
+	img: image.Image
+	atl: atlas.Atlas
+	anm: animator.Anim
+
+	xlerper: lerp.Lerper
+	ylerper: lerp.Lerper
+	effPos: th.Vf2
+
+	selection: int
+	menuPos: th.fu
+)
+
+fn getBarrelImg(): image.Image {
+	switch selection {
+	case turretIdx:
+		return global.turretImg
+	case mortarIdx:
+		return global.mortarImg
+	}
+	return image.Image{}
+}
+
+fn getPlacePos(): th.Vf2 {
+	return th.Vf2{
+		misc.stepify(e.t.p.x, global.tileSize),
+		misc.stepify(e.t.p.y, global.tileSize)}
+}
+
+fn canPlace(): bool {
+	p := getPlacePos()
+	if game.env.isPath(p) {
+		return false
+	}
+
+	for i:=0; i < len(game.bdgsScn); i++ {
+		bp := game.bdgsScn[i].t.p
+		if bp.x == p.x && bp.y == p.y {
+			return false
+		}	
+	}
+
+	return true
+}
+
+fn place() {
+	if !canPlace() {
+		return
+	}
+
+	var bdg: game.Building
+	switch selection {
+	case turretIdx:
+		bdg = new(aimingturret.AimingTurret)
+	case mortarIdx:
+		bdg = new(mortar.Mortar)
+	}
+
+	game.bdgsScn = append(game.bdgsScn, bdg.init(e.t.p))
+	game.bdgs = append(game.bdgs, bdg)
+}
+
+fn reset*() {
+	xlerper = lerp.Lerper{}
+	ylerper = lerp.Lerper{}
+
+	selection = 0
+}
+
+fn init*() {
+	img = image.load("gfx/builder.png")
+	atl = atlas.mk(img, th.Vf2{2, 1})
+
+	anm = animator.Anim{
+		atl: atl,
+		min: 0,
+		max: 2,
+		fps: 10}
+
+	e = new(ent.Ent)
+	e^ = ent.mk(img, th.Transform{ s: th.Vf2{1, 1} })
+
+	menuPos = (global.cam.w - global.tileSize*3 - menuBorder*2) / 2
+}
+
+fn handle*() {
+	mot := th.Vf2{}
+
+	if input.isJustPressed(input.key_up) {
+		mot.y -= 1
+	}
+
+	if input.isJustPressed(input.key_down) {
+		mot.y += 1
+	}
+
+	if input.isJustPressed(input.key_left) {
+		mot.x -= 1
+	}
+
+	if input.isJustPressed(input.key_right) {
+		mot.x += 1
+	}
+
+	if mot.x != 0 || mot.y != 0 {
+		xlerper = append(xlerper, lerp.mk(effPos.x, effPos.x + mot.x * global.tileSize, speed, false))
+		ylerper = append(ylerper, lerp.mk(effPos.y, effPos.y + mot.y * global.tileSize, speed, false))
+		effPos.x += mot.x * global.tileSize
+		effPos.y += mot.y * global.tileSize
+	}
+
+	if len(xlerper) > 0 {
+		e.t.p.x = xlerper.byDelta(th.delta)
+	}
+
+	if len(ylerper) > 0 {
+		e.t.p.y = ylerper.byDelta(th.delta)
+	}
+
+	for i:=0; i < 3; i++ {
+		if input.isJustPressed(char(int('1') + i)) {
+			selection = i
+		}
+	}
+
+	if input.isJustPressed(input.key_enter) {
+		place()
+	}
+}
+
+fn draw*() {
+	c := 0xffffffcc
+	if !canPlace() {
+		c = 0xff2222cc
+	}
+
+	global.turretBaseImg.draw(th.Transform{
+		p: getPlacePos(),
+		s: th.Vf2{ 1, 1 }}, c)
+	getBarrelImg().draw(th.Transform{
+		p: getPlacePos(),
+		s: th.Vf2{ 1, 1 }}, c)
+
+	anm.animate(th.time)
+	e.draw(global.cam)
+
+	oldSel := selection
+	selection = 0
+	for i:=0;selection < 2; selection++ {
+		p := th.Vf2{
+				menuPos + (global.tileSize + menuBorder)*selection,
+				global.cam.h - global.tileSize - menuBorder}
+		if selection == oldSel {
+			canvas.drawRect(0xffffff88, rect.mk(p.x, p.y, global.tileSize, global.tileSize))
+		}
+
+		img := getBarrelImg()
+		img.crop(th.Vf2{0, 0}, th.Vf2{1.0/(img.getDims().x/global.tileSize), 1})
+		img.draw(th.Transform{
+			p: p,
+			s: th.Vf2{1, 1}})
+
+		const labelSize = 4
+		global.ren.draw(repr(selection+1), th.Vf2{
+			p.x + global.tileSize - labelSize, p.y + global.tileSize - labelSize},
+			th.black, 1.0/5*labelSize)
+	}
+	selection = oldSel
+}

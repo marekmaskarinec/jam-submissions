@@ -22,8 +22,6 @@ const (
 )
 
 var (
-	baseImg: image.Image
-	barrelImg: image.Image
 	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
 	barrelAtl: atlas.Atlas
 
@@ -31,9 +29,7 @@ var (
 )
 
 fn init*() {
-	baseImg = image.load("gfx/turret-base.png")
-	barrelImg = image.load("gfx/mortar.png")
-	barrelAtl = atlas.mk(barrelImg, th.Vf2{3, 1})
+	barrelAtl = atlas.mk(global.mortarImg, th.Vf2{3, 1})
 
 	projectileImg = image.load("gfx/mortar-projectile.png")
 }
@@ -60,7 +56,7 @@ fn mkProjectile(sp, tgt: th.Vf2): Projectile {
 
 fn (prj: ^Projectile) getParticles(): particles.Emitter {
 	
-	partc := 400
+	partc := 50
 	e := particles.Emitter{
 		pos: prj.e.t.p.add(th.Vf2{prj.e.r.w/2, prj.e.r.h/2}),
 		dm: th.Vf2{4, 4},
@@ -77,8 +73,8 @@ fn (prj: ^Projectile) getParticles(): particles.Emitter {
 		velocity: 0.4,
 		velocityRandomness: 0.2,
 
-		size: 1,
-		sizeRandomness: 0.2,
+		size: 2,
+		sizeRandomness: 0,
 		maxSize: 2,
 
 		colors: []uint32{0x47cbf9ff, 0x38c5f5aa, 0x28aedc22},
@@ -86,7 +82,7 @@ fn (prj: ^Projectile) getParticles(): particles.Emitter {
 
 	for i:=0; i < len(e.particles); i++ {
 		e.particles[i] = particles.Particle{
-			start_time: th.time + std.rand() % 300,
+			start_time: th.time + std.rand() % 150,
 			seed: std.rand()}
 	}
 
@@ -100,7 +96,7 @@ fn (prj: ^Projectile) handle(): bool {
 	dist := prj.e.t.p.distanceTo(prj.tgt)
 	fd := prj.sp.distanceTo(prj.tgt)
 	half := fd/2
-	coefficient := 3
+	coefficient := 6
 	dth := dist-half
 	s := 1 + ((-dth/fd) * (dth/fd) + (half/fd) * (half/fd)) * coefficient
 	prj.e.t.s = th.Vf2{s, s}
@@ -138,7 +134,7 @@ type Mortar* = struct {
 
 fn (mtr: ^Mortar) init(pos: th.Vf2): ^ent.Ent {
 	mtr.e = new(ent.Ent)
-	mtr.e^ = ent.mk(baseImg, trans)
+	mtr.e^ = ent.mk(global.turretBaseImg, trans)
 	mtr.e.t.p = pos
 
 	mtr.fireInterval = fireInterval
@@ -186,7 +182,7 @@ fn (mtr: ^Mortar) draw*() {
 	mtr.e.draw(global.cam)
 	
 	mtr.anm.animate(th.time)
-	barrelImg.draw(th.Transform{
+	global.mortarImg.draw(th.Transform{
 		s: th.Vf2{ 1, 1 },
 		p: global.cam.toScreen(mtr.e.t.p)})
 

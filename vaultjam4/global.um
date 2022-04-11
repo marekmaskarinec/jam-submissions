@@ -2,7 +2,9 @@
 import (
 	"th.um"
 	"ui.um"
+	"font.um"
 	"rect.um"
+	"image.um"
 )
 
 const (
@@ -15,9 +17,16 @@ var (
 	boldRen*: ui.TextRenderer
 
 	gameScnId*: int
+
+	turretBaseImg*: image.Image
+	mortarImg*: image.Image
+	turretImg*: image.Image
 )
 
 fn init*() {
-	ren = ui.PixelFont{}
+	ren = font.mkCached(font.load("kpfont6/reg.ttf"), 32)
 	boldRen = ui.PixelFont{}
+	turretBaseImg = image.load("gfx/turret-base.png")
+	mortarImg = image.load("gfx/mortar.png")
+	turretImg = image.load("gfx/aiming-turret-barrel.png")
 }

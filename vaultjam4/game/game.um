@@ -92,6 +92,17 @@ fn (e: ^Env) init*(pts: []th.Vf2, dm: th.Vf2) {
 	}
 }
 
+fn (e: ^Env) isPath(p: th.Vf2): bool {
+	p.x /= global.tileSize
+	p.y /= global.tileSize
+
+	if p.x < 0 || p.x < 0 || p.x >= e.map.w || p.y >= len(e.map.cells) / e.map.w {
+		return false
+	}
+
+	return e.map.cells[trunc(p.x + p.y * e.map.w)] > floorTileCount
+}
+
 fn init*() {
 	bdgs = []Building{}
 	bdgsScn = []^ent.Ent{}
