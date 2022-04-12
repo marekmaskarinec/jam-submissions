@@ -58,11 +58,11 @@ fn (gpr: ^Gproj) handle*(): bool {
 	gpr.motion = tpos.sub(gpr.e.t.p).
 		div(th.Vf2{dist, dist})
 
-	const detail = 10
+	const detail = 5
 	for i:=0; i < detail; i++ {
 		gpr.e.t.p = gpr.e.t.p.add(gpr.motion.mul(th.Vf2{th.delta, th.delta}).mul(th.Vf2{speed/detail, speed/detail}))
   
-		if len(gpr.e.getColl([]^ent.Ent{gpr.target.getEnt()}, 1)) > 0 {
+		if len(gpr.e.getColl([]^ent.Ent{tent}, 1)) > 0 {
 			gpr.target.damage(1) // TODO: setable damage
 			return true
 		}

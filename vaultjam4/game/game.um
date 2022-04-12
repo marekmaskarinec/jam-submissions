@@ -3,6 +3,7 @@ import (
 	"th.um"
 	"ent.um"
 	"std.um"
+	"rect.um"
 	"atlas.um"
 	"image.um"
 	"signal.um"
@@ -13,6 +14,7 @@ import (
 
 const (
 	floorTileCount = 6
+	coinColor = th.yellow
 )
 
 type Building* = interface {
@@ -20,6 +22,7 @@ type Building* = interface {
 	reset()
 	handle()
 	draw()
+	drawProjectiles()
 
 	refill(amount: int)
 }
@@ -33,11 +36,17 @@ type Enemy* = interface {
 	getEnt(): ^ent.Ent
 	damage(amount: int)
 	alive(): bool
+	die()
 }
 
 type Env* = struct {
 	path: []th.Vf2
 	map: tilemap.Tilemap
+}
+
+type Coin* = struct {
+	e: ^ent.Ent
+	spawnTime: int
 }
 
 var (
@@ -46,6 +55,9 @@ var (
 
 	enms*: []Enemy
 	enmsScn*: []^ent.Ent
+
+	coins*: []Coin
+	coinScn*: []^ent.Ent
 
 	tileset: atlas.Atlas
 	env*: Env
@@ -103,12 +115,30 @@ fn (e: ^Env) isPath(p: th.Vf2): bool {
 	return e.map.cells[trunc(p.x + p.y * e.map.w)] > floorTileCount
 }
 
+fn spawnCoin*(p: th.Vf2) {
+	cn := Coin{}
+
+	cn.e = new(ent.Ent)
+	cn.e^ = ent.mk(image.Image{}, th.Transform{ s: th.Vf2{1, 1} })
+	cn.e.r = rect.mk(0, 0, 1, 1)
+	cn.e.c = coinColor
+	cn.e.t.p = p
+
+	cn.spawnTime = th.time
+
+	coins = append(coins, cn)
+	coinScn = append(coinScn, cn.e)
+}
+
 fn init*() {
 	bdgs = []Building{}
 	bdgsScn = []^ent.Ent{}
 
 	enms = []Enemy{}
 	enmsScn = []^ent.Ent{}
+
+	coins = []Coin{}
+	coinScn = []^ent.Ent{}
 
 	tileset = atlas.mk(image.load("gfx/ground-tiles.png"), th.Vf2{6, 3})
 }
@@ -131,6 +161,7 @@ fn handle*() {
 	for i:=0; i < len(enms); i++ {
 		enms[i].handle()
 		if !enms[i].alive() {
+			enms[i].die()
 			signal.emit("enemy_kill", i)
 			enms = delete(enms, i)
 			enmsScn = delete(enmsScn, i)
@@ -141,6 +172,10 @@ fn handle*() {
 fn draw*() {
 	env.map.draw(global.cam)
 
+	for i:=0; i < len(coins); i++ {
+		//coins[i].e.draw(global.cam)
+	}
+
 	for i:=0; i < len(bdgs); i++ {
 		bdgs[i].draw()
 	}
@@ -148,4 +183,10 @@ fn draw*() {
 	for i:=0; i < len(enms); i++ {
 		enms[i].draw()
 	}
+
+	for i:=0; i < len(bdgs); i++ {
+		bdgs[i].drawProjectiles()
+	}
+
+	global.ren.draw(repr(len(enms)), th.Vf2{0, 30}, th.black, 2)
 }

@@ -3,6 +3,7 @@ import (
 	"th.um"
 	"std.um"
 	"ent.um"
+	"misc.um"
 	"rect.um"
 	"image.um"
 	"signal.um"
@@ -20,6 +21,7 @@ type Cfg* = struct {
 	img: image.Image
 	speed: th.fu
 	hp: int
+	reward: int
 }
 
 var (
@@ -32,23 +34,28 @@ fn init*() {
 		Cfg{
 			img: image.load("gfx/enemies/enemy_1.png"),
 			speed: 0.1,
-			hp: 1},
+			hp: 1,
+			reward: 0},
 		Cfg{
 			img: image.load("gfx/enemies/enemy_2.png"),
 			speed: 0.05,
-			hp: 2},
+			hp: 2,
+			reward: 1},
 		Cfg{
 			img: image.load("gfx/enemies/enemy_3.png"),
 			speed: 0.01,
-			hp: 5},
+			hp: 5,
+			reward: 2},
 		Cfg{
 			img: image.load("gfx/enemies/enemy_4.png"),
 			speed: 0.01,
-			hp: 10},
+			hp: 10,
+			reward: 4},
 		Cfg{
 			img: image.load("gfx/enemies/enemy_4.png"),
 			speed: 0.004,
-			hp: 25}}
+			hp: 25,
+			reward: 5}}
 }
 
 type Enemy* = struct {
@@ -57,6 +64,7 @@ type Enemy* = struct {
 	hp: int
 	speed: th.fu
 
+	reward: int
 	lastHit: int
 }
 
@@ -71,6 +79,7 @@ fn (enm: ^Enemy) init(pos: th.Vf2) {
 
 	enm.speed = cfg.speed
 	enm.hp = cfg.hp
+	enm.reward = cfg.reward
 }
 
 fn (enm: ^Enemy) reset() {
@@ -114,4 +123,16 @@ fn (enm: ^Enemy) damage(amount: int) {
 
 fn (enm: ^Enemy) alive(): bool {
 	return enm.hp > 0
+}
+
+fn (enm: ^Enemy) die() {
+	for i:=0; i < enm.reward; i++ {
+		p := th.Vf2{
+			misc.stepify(enm.e.t.p.x, global.tileSize),
+			misc.stepify(enm.e.t.p.y, global.tileSize)}
+		p.x += std.rand() % (trunc(global.tileSize)-2) + 1
+		p.y += std.rand() % (trunc(global.tileSize)-2) + 1
+
+		game.spawnCoin(p)
+	}	
 }

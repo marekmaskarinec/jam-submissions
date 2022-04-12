@@ -15,7 +15,7 @@ import (
 
 const (
 	maxAmmo = 20
-	fireInterval = 1000
+	fireInterval = 2000
 	projSpeed = 0.4
 	projRadius = global.tileSize
 	projDamage = 2
@@ -55,7 +55,6 @@ fn mkProjectile(sp, tgt: th.Vf2): Projectile {
 }
 
 fn (prj: ^Projectile) getParticles(): particles.Emitter {
-	
 	partc := 50
 	e := particles.Emitter{
 		pos: prj.e.t.p.add(th.Vf2{prj.e.r.w/2, prj.e.r.h/2}),
@@ -82,7 +81,7 @@ fn (prj: ^Projectile) getParticles(): particles.Emitter {
 
 	for i:=0; i < len(e.particles); i++ {
 		e.particles[i] = particles.Particle{
-			start_time: th.time + std.rand() % 150,
+			start_time: th.time + 150/partc * i,
 			seed: std.rand()}
 	}
 
@@ -107,7 +106,6 @@ fn (prj: ^Projectile) handle(): bool {
 				// killing an enemy will cause another enemy to be skipped FIXME
 				game.enms[i].damage(projDamage)
 			}
-
 		}
 
 		effects.addEmitter(prj.getParticles())
@@ -185,7 +183,9 @@ fn (mtr: ^Mortar) draw*() {
 	global.mortarImg.draw(th.Transform{
 		s: th.Vf2{ 1, 1 },
 		p: global.cam.toScreen(mtr.e.t.p)})
+}
 
+fn (mtr: ^Mortar) drawProjectiles*() {
 	for i:=0; i < len(mtr.projectiles); i++ {
 		mtr.projectiles[i].draw()
 	}

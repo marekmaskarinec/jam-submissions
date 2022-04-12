@@ -83,7 +83,7 @@ fn (atr: ^AimingTurret) findEnemy(): ^game.Enemy {
 	dist := -1.0
 	index := -1
 	for i:=0; i < len(game.enms); i++ {
-		dist2 := atr.e.t.p.distanceTo(game.enms[i].getEnt().t.p)
+		dist2 := atr.e.t.p.distanceTo(game.enmsScn[i].t.p)
 		if dist < 0 || dist2 < dist {
 			dist = dist2
 			index = i
@@ -97,7 +97,7 @@ fn (atr: ^AimingTurret) findEnemy(): ^game.Enemy {
 }
 
 fn (atr: ^AimingTurret) handle*() {
-	atr.tgt = atr.findEnemy()
+	//atr.tgt = atr.findEnemy()
 
 	if atr.tgt != null {
 		atr.agl = atr.e.t.p.angleTo(atr.tgt.getEnt().t.p)
@@ -130,16 +130,18 @@ fn (atr: ^AimingTurret) handle*() {
 fn (atr: ^AimingTurret) draw*() {
 	atr.e.draw(global.cam)
 
-	for i:=0; i < len(atr.projectiles); i++ {
-		atr.projectiles[i].draw()
-	}
-
 	atr.anm.animate(th.time)
 	global.turretImg.draw(th.Transform{
 		p: global.cam.toScreen(atr.e.t.p),
 		s: th.Vf2{ 1, 1 },
 		o: th.Vf2{ atr.e.r.w/2, atr.e.r.h/2 },
 		r: atr.agl - 180})
+}
+
+fn (atr: ^AimingTurret) drawProjectiles*() {
+	for i:=0; i < len(atr.projectiles); i++ {
+		atr.projectiles[i].draw()
+	}
 }
 
 fn (atr: ^AimingTurret) refill*(amount: int) {
