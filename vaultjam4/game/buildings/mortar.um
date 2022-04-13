@@ -31,7 +31,7 @@ var (
 fn init*() {
 	barrelAtl = atlas.mk(global.mortarImg, th.Vf2{3, 1})
 
-	projectileImg = image.load("gfx/mortar-projectile.png")
+	projectileImg = image.load("gfx/buildings/mortar-projectile.png")
 }
 
 type Projectile* = struct {

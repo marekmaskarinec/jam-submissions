@@ -97,7 +97,9 @@ fn (atr: ^AimingTurret) findEnemy(): ^game.Enemy {
 }
 
 fn (atr: ^AimingTurret) handle*() {
-	//atr.tgt = atr.findEnemy()
+	if (th.time/50)%2 == 0 {
+		atr.tgt = atr.findEnemy()
+	}
 
 	if atr.tgt != null {
 		atr.agl = atr.e.t.p.angleTo(atr.tgt.getEnt().t.p)

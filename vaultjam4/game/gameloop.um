@@ -6,19 +6,23 @@ import (
 	"game.um"
 	"enemy.um"
 	"gproj.um"
-	"builder.um"
 	"spawner.um"
 	"../scene.um"
 	"../global.um"
 	"../effects.um"
 	"buildings/mortar.um"
 	"buildings/aimingturret.um"
+	"characters/builder.um"
+	"characters/collector.um"
 )
 
 fn reset*() {
 	hud.reset()
 	game.reset()
+
 	builder.reset()
+	collector.reset()
+
 	spawner.reset()
 	effects.reset()
 }
@@ -26,7 +30,16 @@ fn reset*() {
 fn handle*() {
 	hud.handle()
 	game.handle()
-	builder.handle()
+
+
+	switch game.character {
+	case game.charBuilder:
+		builder.handle()
+	case game.charCollector:
+		collector.handle()
+	}
+	
+
 	effects.handle()
 	spawner.handle()
 }
@@ -34,7 +47,10 @@ fn handle*() {
 fn draw*() {
 	game.draw()
 	effects.draw()
+
 	builder.draw()
+	collector.draw()
+
 	spawner.draw()
 	hud.draw()
 }
@@ -42,12 +58,16 @@ fn draw*() {
 fn init*() {
 	hud.init()
 	game.init()
-	enemy.init()
+
 	gproj.init()
 	mortar.init()
-	spawner.init()
 	aimingturret.init()
+
+	enemy.init()
+	spawner.init()
+
 	builder.init()
+	collector.init()
 
 	game.env.init([]th.Vf2{
 		th.Vf2{0, 0}, th.Vf2{6, 0},

@@ -19,7 +19,7 @@ var (
 )
 
 fn init*() {
-	img = image.load("gfx/turret-projectile.png")
+	img = image.load("gfx/buildings/turret-projectile.png")
 }
 
 type Gproj* = struct {

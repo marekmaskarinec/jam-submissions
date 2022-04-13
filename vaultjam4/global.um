@@ -27,8 +27,8 @@ var (
 fn init*() {
 	ren = font.mkCached(font.load("kpfont6/reg.ttf"), 32)
 	boldRen = ui.PixelFont{}
-	turretBaseImg = image.load("gfx/turret-base.png")
-	mortarImg = image.load("gfx/mortar.png")
-	turretImg = image.load("gfx/aiming-turret-barrel.png")
+	turretBaseImg = image.load("gfx/buildings/turret-base.png")
+	mortarImg = image.load("gfx/buildings/mortar.png")
+	turretImg = image.load("gfx/buildings/aiming-turret-barrel.png")
 	borderImg = image.load("gfx/border.png")
 }

@@ -1,0 +1,81 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"lerp.um"
+	"atlas.um"
+	"image.um"
+
+	"common.um"
+	"../game.um"
+	"../../global.um"
+	"../../animator.um"
+)
+
+const (
+	speed = 50
+	fps = 10
+	unfps = 2
+)
+
+var (
+	e: ^ent.Ent
+
+	img: image.Image
+	atl: atlas.Atlas
+	anm: animator.Anim	
+
+	xlerper, ylerper: lerp.Lerper
+	effPos: th.Vf2
+)
+
+fn reset*() {
+	e = new(ent.Ent)
+	e^ = ent.mk(img, th.Transform{ s: th.Vf2{1, 1} })
+	e.c = th.yellow
+	e.r.w = global.tileSize
+	e.r.h = global.tileSize
+
+	xlerper = lerp.Lerper{}
+	ylerper = lerp.Lerper{}
+}
+
+fn init*() {
+	img = image.load("gfx/characters/collector.png")
+	atl = atlas.mk(img, th.Vf2{2, 1})
+
+	anm = animator.Anim{
+		atl: atl,
+		min: 0,
+		max: 2,
+		fps: 10}
+}
+
+fn handle*() {
+	common.move(&e.t.p, &effPos, &xlerper, &ylerper, speed)
+
+	for i:=0; i < len(game.coins); i++ {
+		p := game.coins[i].e.t.p
+
+		if p.x >= e.t.p.x && p.y >= e.t.p.y &&
+			p.x < e.t.p.x + global.tileSize &&
+			p.y < e.t.p.y + global.tileSize {
+			game.coins = delete(game.coins, i)
+
+			game.money++
+		}
+	}
+}
+
+fn draw*() {
+	if game.character != game.charCollector {
+		e.c = 0xffffffaa
+		anm.fps = unfps
+	}
+
+	anm.animate(th.time)
+	e.draw(global.cam)
+
+	anm.fps = fps
+	e.c = th.white
+}
