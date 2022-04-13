@@ -25,5 +25,7 @@ fn main() {
 	for window.cycle(global.cam) {
 		scene.handle()
 		scene.draw()
+
+		global.borderImg.draw(th.Transform{ s: th.Vf2{1, 1} })
 	}
 }

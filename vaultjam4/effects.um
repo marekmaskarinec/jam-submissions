@@ -1,14 +1,30 @@
 
 import (
 	"th.um"
+	"lerp.um"
+	"rect.um"
+	"canvas.um"
 	"particles.um"
 
 	"global.um"
 )
 
+const (
+	hurtOpacity = 0xaa
+	hurtColor = 0xff000000
+	hurtLen = 200
+)
+
 var (
 	emitters: []particles.Emitter
+
+	hurtLerper: lerp.Lerper
 )
+
+fn hurtEffect*() {
+	hurtLerper = append(hurtLerper, lerp.mk(0, hurtOpacity, hurtLen, false))
+	hurtLerper = append(hurtLerper, lerp.mk(hurtOpacity, 0, hurtLen, false))
+}
 
 fn addEmitter*(e: particles.Emitter) {
 	emitters = append(emitters, e)
@@ -16,6 +32,7 @@ fn addEmitter*(e: particles.Emitter) {
 
 fn reset*() {
 	emitters = []particles.Emitter{}
+	hurtLerper = lerp.Lerper{}
 }
 
 fn handle*() {
@@ -24,6 +41,13 @@ fn handle*() {
 fn draw*() {
 	for i:=0; i < len(emitters); i++ {
 		emitters[i].draw(global.cam, th.time)
+	}
+
+	if len(hurtLerper) > 0 {
+		val := trunc(hurtLerper.byDelta(th.delta))
+		if val < 0 { val = 0 }
+		canvas.drawRect(hurtColor | val,
+			rect.mk(0, 0, global.cam.w, global.cam.h))
 	}
 }
 

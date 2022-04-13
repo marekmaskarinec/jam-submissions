@@ -2,6 +2,7 @@
 import (
 	"th.um"
 
+	"hud.um"
 	"game.um"
 	"enemy.um"
 	"gproj.um"
@@ -15,6 +16,7 @@ import (
 )
 
 fn reset*() {
+	hud.reset()
 	game.reset()
 	builder.reset()
 	spawner.reset()
@@ -22,6 +24,7 @@ fn reset*() {
 }
 
 fn handle*() {
+	hud.handle()
 	game.handle()
 	builder.handle()
 	effects.handle()
@@ -30,12 +33,14 @@ fn handle*() {
 
 fn draw*() {
 	game.draw()
-	builder.draw()
 	effects.draw()
+	builder.draw()
 	spawner.draw()
+	hud.draw()
 }
 
 fn init*() {
+	hud.init()
 	game.init()
 	enemy.init()
 	gproj.init()
@@ -43,17 +48,6 @@ fn init*() {
 	spawner.init()
 	aimingturret.init()
 	builder.init()
-
-	tur := new(aimingturret.AimingTurret)
-	game.bdgsScn = append(game.bdgsScn, tur.init(th.Vf2{45, 15}))
-	game.bdgs = append(game.bdgs, tur)
-	tur = new(aimingturret.AimingTurret)
-	game.bdgsScn = append(game.bdgsScn, tur.init(th.Vf2{60, 75}))
-	game.bdgs = append(game.bdgs, tur)
-
-	mtr := new(mortar.Mortar)
-	game.bdgsScn = append(game.bdgsScn, mtr.init(th.Vf2{60, 60}))
-	game.bdgs = append(game.bdgs, mtr)
 
 	game.env.init([]th.Vf2{
 		th.Vf2{0, 0}, th.Vf2{6, 0},

@@ -11,6 +11,7 @@ import (
 	"../game.um"
 	"../../logger.um"
 	"../../global.um"
+	"../../effects.um"
 )
 
 const (
@@ -89,14 +90,16 @@ fn (enm: ^Enemy) reset() {
 fn (enm: ^Enemy) handle() {
 	if trunc(enm.pos) + 1 >= len(game.env.path) {
 		enm.pos = 0
+		effects.hurtEffect()
 		signal.emit("path_finish", null)
 	}
 
-	b := game.env.path[trunc(enm.pos)]
-	e := game.env.path[trunc(enm.pos) + 1]
+	p := trunc(enm.pos)
+	b := game.env.path[p]
+	e := game.env.path[p + 1]
 	enm.e.t.p = th.Vf2{
-		b.x + (e.x-b.x) * (enm.pos - trunc(enm.pos)),
-		b.y + (e.y-b.y) * (enm.pos - trunc(enm.pos))}
+		b.x + (e.x-b.x) * (enm.pos - p),
+		b.y + (e.y-b.y) * (enm.pos - p)}
 
 	enm.pos += enm.speed * th.delta / b.distanceTo(e)
 	enm.e.t.r = enm.e.t.p.angleTo(e) + 90

@@ -1,0 +1,34 @@
+
+import (
+	"th.um"
+	"image.um"
+	
+	"game.um"
+	"../global.um"
+)
+
+var (
+	healthImg: image.Image
+	coinImg: image.Image
+)
+
+fn init*() {
+	healthImg = image.load("gfx/hearth.png")
+	coinImg = image.load("gfx/coin.png")
+}
+
+fn reset*() { }
+
+fn handle*() { }
+
+fn draw*() {
+	healthImg.draw(th.Transform{
+		s: th.Vf2{1, 1},
+		p: th.Vf2{2, 2}})
+	global.ren.draw(repr(game.health), th.Vf2{2 + 15, 2}, th.black, 0.2*15)
+	
+	coinImg.draw(th.Transform{
+		s: th.Vf2{1, 1},
+		p: th.Vf2{2 + 15 + 30, 2}})
+	global.ren.draw(repr(game.money), th.Vf2{2 + 15 + 30 + 15, 2}, th.black, 0.2*15)
+}

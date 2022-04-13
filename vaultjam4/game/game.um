@@ -14,7 +14,9 @@ import (
 
 const (
 	floorTileCount = 6
+
 	coinColor = th.yellow
+	coinDuration = 3000
 )
 
 type Building* = interface {
@@ -61,6 +63,9 @@ var (
 
 	tileset: atlas.Atlas
 	env*: Env
+
+	health*: int
+	money*: int
 )
 
 fn (e: ^Env) init*(pts: []th.Vf2, dm: th.Vf2) {
@@ -130,6 +135,10 @@ fn spawnCoin*(p: th.Vf2) {
 	coinScn = append(coinScn, cn.e)
 }
 
+fn gameOver*() {
+	printf("game over\n")
+}
+
 fn init*() {
 	bdgs = []Building{}
 	bdgsScn = []^ent.Ent{}
@@ -141,6 +150,12 @@ fn init*() {
 	coinScn = []^ent.Ent{}
 
 	tileset = atlas.mk(image.load("gfx/ground-tiles.png"), th.Vf2{6, 3})
+
+	signal.register("path_finish", signal.Callback{
+		health--
+		if health == 0 {
+			gameOver()
+		}})
 }
 
 fn reset*() {
@@ -151,6 +166,9 @@ fn reset*() {
 	for i:=0; i < len(enms); i++ {
 		enms[i].reset()
 	}
+
+	health = 10
+	money = 100
 }
 
 fn handle*() {
@@ -167,13 +185,20 @@ fn handle*() {
 			enmsScn = delete(enmsScn, i)
 		}
 	}
+
+	for i:=0; i < len(coins); i++ {
+		if th.time - coins[i].spawnTime >= coinDuration {
+			coins = delete(coins, i)
+			break
+		}
+	}
 }
 
 fn draw*() {
 	env.map.draw(global.cam)
 
 	for i:=0; i < len(coins); i++ {
-		//coins[i].e.draw(global.cam)
+		coins[i].e.draw(global.cam)
 	}
 
 	for i:=0; i < len(bdgs); i++ {

@@ -30,6 +30,7 @@ const (
 var (
 	e: ^ent.Ent
 
+	bg: image.Image
 	img: image.Image
 	atl: atlas.Atlas
 	anm: animator.Anim
@@ -99,6 +100,7 @@ fn reset*() {
 }
 
 fn init*() {
+	bg = image.load("gfx/builder-bg.png")
 	img = image.load("gfx/builder.png")
 	atl = atlas.mk(img, th.Vf2{2, 1})
 
@@ -174,6 +176,10 @@ fn draw*() {
 
 	anm.animate(th.time)
 	e.draw(global.cam)
+
+	bg.draw(th.Transform{
+		p: th.Vf2{menuPos, global.cam.h-bg.getDims().y},
+		s: th.Vf2{1, 1}})
 
 	oldSel := selection
 	selection = 0

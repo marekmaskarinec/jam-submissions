@@ -21,6 +21,7 @@ var (
 	turretBaseImg*: image.Image
 	mortarImg*: image.Image
 	turretImg*: image.Image
+	borderImg*: image.Image
 )
 
 fn init*() {
@@ -29,4 +30,5 @@ fn init*() {
 	turretBaseImg = image.load("gfx/turret-base.png")
 	mortarImg = image.load("gfx/mortar.png")
 	turretImg = image.load("gfx/aiming-turret-barrel.png")
+	borderImg = image.load("gfx/border.png")
 }
