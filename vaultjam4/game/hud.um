@@ -9,7 +9,7 @@ import (
 
 var (
 	healthImg: image.Image
-	coinImg: image.Image
+	coinImg*: image.Image
 )
 
 fn init*() {

@@ -21,6 +21,9 @@ const (
 
 	charBuilder* = 0
 	charCollector*
+
+	turretPrice* = 20
+	mortarPrice* = 40
 )
 
 type Building* = interface {

@@ -11,6 +11,7 @@ import (
 	"canvas.um"
 
 	"common.um"
+	"../hud.um"
 	"../game.um"
 	"../../global.um"
 	"../../animator.um"
@@ -56,6 +57,17 @@ fn getBarrelImg(): image.Image {
 	return image.Image{}
 }
 
+fn getPrice(): int {
+	switch selection {
+	case turretIdx:
+		return game.turretPrice
+	case mortarIdx:
+		return game.mortarPrice
+	}
+
+	return 0
+}
+
 fn getPlacePos(): th.Vf2 {
 	return th.Vf2{
 		misc.stepify(e.t.p.x, global.tileSize),
@@ -63,6 +75,10 @@ fn getPlacePos(): th.Vf2 {
 }
 
 fn canPlace(): bool {
+	if getPrice() > game.money {
+		return false
+	}
+
 	p := getPlacePos()
 	if game.env.isPath(p) {
 		return false
@@ -93,6 +109,8 @@ fn place() {
 
 	game.bdgsScn = append(game.bdgsScn, bdg.init(e.t.p))
 	game.bdgs = append(game.bdgs, bdg)
+
+	game.money -= getPrice()
 }
 
 fn reset*() {
@@ -146,15 +164,27 @@ fn drawTurret() {
 		s: th.Vf2{ 1, 1 }}, c)
 }
 
+fn getMenuItemColor(oldSel: int): uint32 {
+	c := 0xffffff00
+	if game.money < getPrice() {
+		c = 0xff222200
+	}
+
+	if selection == oldSel {
+		c += 0xff
+	} else {
+		c += 0xaa
+	}
+
+	return c
+}
+
 fn drawMenuItem(oldSel: int) {
 		p := th.Vf2{
 				menuPos + (global.tileSize + menuBorder)*selection,
 				global.cam.h - global.tileSize - menuBorder}
 
-		c := 0xffffffaa
-		if selection == oldSel {
-			c = th.white
-		}
+		c := getMenuItemColor(oldSel)
 
 		img := getBarrelImg()
 		img.crop(th.Vf2{0, 0}, th.Vf2{1.0/(img.getDims().x/global.tileSize), 1})
@@ -166,6 +196,13 @@ fn drawMenuItem(oldSel: int) {
 		global.ren.draw(repr(selection+1), th.Vf2{
 			p.x + global.tileSize - labelSize, p.y + global.tileSize - labelSize},
 			th.black, 1.0/5*labelSize)
+
+		hud.coinImg.draw(th.Transform{
+			s: th.Vf2{labelSize, labelSize}.div(hud.coinImg.getDims()),
+			p: th.Vf2{p.x, p.y + global.tileSize - labelSize}}, c)
+		global.ren.draw(repr(getPrice()),
+			th.Vf2{p.x + labelSize, p.y + global.tileSize - labelSize},
+			th.black, 0.2*labelSize)
 }
 
 fn drawMenu() {

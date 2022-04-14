@@ -23,7 +23,7 @@ fn init*() {
 }
 
 fn enemyLimit(): int {
-	return trunc(0.2 * score + 1)
+	return trunc(0.1 * score + 1)
 }
 
 fn spawn() {

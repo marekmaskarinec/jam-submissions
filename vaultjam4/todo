@@ -1,13 +1,16 @@
 todo:
-collector
+balance enemies
 mine layer
 level system/level gen
+boss
+make coin opacity based on time left
 flamethrower
 menu
-zvuky
+sounds
 polish
 
 done:
+collector
 health
 enemy kill reward
 builder
