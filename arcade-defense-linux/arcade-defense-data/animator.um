@@ -1,0 +1,23 @@
+
+import (
+	"th.um"
+	"atlas.um"
+)
+
+type Anim* = struct {
+	atl: atlas.Atlas
+	min: int
+	max: int
+	fps: real32
+	offset: int
+}
+
+fn (anm: ^Anim) animate(time: int) {
+	n := (round(real(time-anm.offset)/round((1000.0/anm.fps))) % anm.max) + anm.min
+
+	anm.atl.cropSource(anm.atl.coords(n))
+}
+
+fn (anm: ^Anim) framesPlayed(): int {
+	return trunc((th.time - anm.offset) / 1000.0 * anm.fps)
+}

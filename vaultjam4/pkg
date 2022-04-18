@@ -1,0 +1,12 @@
+#!/bin/sh
+
+rm ../arcade-defense-*.zip
+rm -r ../arcade-defense-linux/arcade-defense-data/*
+rm -r ../arcade-defense-windows/arcade-defense-data/*
+cp -r ./* ../arcade-defense-linux/arcade-defense-data
+cp -r ./* ../arcade-defense-windows/arcade-defense-data
+cp ~/dev/tophat/tophat ../arcade-defense-linux/arcade-defense-data
+cp ~/dev/tophat/tophat.exe ../arcade-defense-windows/arcade-defense-data/tophat.exe
+
+zip -r ../arcade-defense-linux.zip ../arcade-defense-linux
+zip -r ../arcade-defense-windows.zip ../arcade-defense-windows

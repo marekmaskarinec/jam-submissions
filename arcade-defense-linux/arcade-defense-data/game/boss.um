@@ -1,0 +1,132 @@
+// Boss is just a wrapper arount enemy
+
+import (
+	"th.um"
+	"ent.um"
+	"atlas.um"
+	"image.um"
+
+	"hud.um"
+	"game.um"
+	"enemy.um"
+	"../scene.um"
+	"../global.um"
+	"../animator.um"
+)
+
+const (
+	dieLen = 2000
+)
+
+var (
+	img: image.Image
+	atl: atlas.Atlas	
+
+	dieImg: image.Image
+	dieAtl: atlas.Atlas
+)
+
+type Boss* = struct {
+	enm: enemy.Enemy
+	anm: animator.Anim
+
+	dying: bool
+	dieStart: int
+	dieAnm: animator.Anim
+}
+
+fn init*() {
+	img = image.load("gfx/enemies/boss.png")
+	atl = atlas.mk(img, th.Vf2{3, 1})
+
+	dieImg = image.load("gfx/enemies/boss-die.png")
+	dieAtl = atlas.mk(dieImg, th.Vf2{4, 1})
+}
+
+fn (bss: ^Boss) reset() {
+	bss.enm.hp = game.bossMaxHp
+}
+
+fn (bss: ^Boss) init(pos: th.Vf2) {
+	bss.enm.init(pos)
+	bss.anm = animator.Anim{
+		atl: atl,
+		min: 0,
+		max: 3,
+		fps: 5}
+
+	bss.enm.speed = 0.02
+	bss.enm.e.i = img
+
+	bss.dieAnm = animator.Anim{
+		atl: dieAtl,
+		min: 0,
+		max: 4,
+		fps: 5}
+
+	bss.reset()
+}
+
+fn (bss: ^Boss) handle() {
+	if bss.dying {
+		if th.time - bss.dieStart > dieLen {
+			bss.dying = false
+		}
+
+		return
+	}
+
+	bss.enm.handle()
+}
+
+fn (bss: ^Boss) draw() {
+	if bss.dying {
+		if bss.dieAnm.framesPlayed() >= 3 {
+			return
+		}
+
+		bss.dieAnm.animate(th.time)
+		bss.enm.e.i = dieImg
+		bss.enm.draw()
+
+		return
+	}
+
+	hud.drawBossHealth(bss.enm.hp)
+
+	bss.anm.animate(th.time)
+	bss.enm.draw()
+}
+
+fn (bss: ^Boss) getEnt(): ^ent.Ent {
+	return bss.enm.e
+}
+
+fn (bss: ^Boss) damage(amount: int) {
+	if bss.dying {
+		return
+	}
+
+	bss.enm.damage(amount)
+
+	if bss.enm.hp <= 0 {
+		bss.dying = true
+		bss.dieStart = th.time
+		bss.dieAnm.offset = th.time
+	}
+}
+
+fn (bss: ^Boss) alive(): bool {
+	if bss.dying {
+		return true
+	}
+
+	return bss.enm.alive()
+}
+
+fn (bss: ^Boss) die() {
+	scene.change(global.levelCompleteScnId)
+
+	bss.enm.die()
+}
+

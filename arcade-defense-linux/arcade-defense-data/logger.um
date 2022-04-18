@@ -1,0 +1,10 @@
+
+import (
+	"th.um"
+
+	"scene.um"
+)
+
+fn msg*(v: str) {
+	printf("[%d] %s: %s\n", th.time, scene.byId(scene.curr).name, v)
+}

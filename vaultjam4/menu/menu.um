@@ -1,0 +1,95 @@
+
+import (
+	"th.um"
+	"std.um"
+	"image.um"
+	"input.um"
+	"canvas.um"
+
+	"menuutil.um"
+	"../scene.um"
+	"../global.um"
+	"../game/game.um"
+	"../static/levels.um"
+)
+const (
+	margin = 18
+)
+
+var (
+	selection: int
+)
+
+fn reset*() {
+
+}
+
+fn handle*() {
+	for i:=0; i < levels.count(); i++ {
+		if input.isJustPressed(char(int('1') + i)) {
+			selection = i
+		}
+	}
+
+	if input.isJustPressed(input.key_enter) {
+		game.loadLevel(selection)
+		scene.change(global.gameScnId)
+	}
+}
+
+fn draw*() {
+	global.drawBgTiles()
+
+	lvl := levels.getLevel(selection)
+	img := lvl.img
+	if img.handle == 0 {
+		return
+	}
+
+	dm := img.getDims()
+
+	s := th.Vf2{
+		global.cam.w/dm.x - margin/global.cam.w,
+		global.cam.h/dm.y - margin/global.cam.w}
+
+	img.draw(th.Transform{
+		p: th.Vf2{margin, margin},
+		s: s})
+
+	const texts = 0.2*margin*0.8
+
+	global.ren.draw(lvl.name,
+		th.Vf2{margin, 4},
+		global.textColor, texts)
+
+	if (th.time/menuutil.blinkFreq)%2 == 0 {
+		global.ren.draw("ENTER", th.Vf2{global.cam.w-2 - menuutil.textLen("ENTER", texts), 4}, global.textColor, texts)
+	}
+
+	y := th.fu(margin) + 1
+	for i:=0; i < levels.count(); i++ {
+		c := global.textColor
+		if i == selection {
+			c -= 0x44
+		}
+
+		global.ren.draw(std.itoa(i+1) + ".", th.Vf2{4, y}, c, texts)
+		y += texts * 5
+	}
+
+	/*const arrowSize = 4
+	global.ren.draw("<",
+		th.Vf2{3, global.cam.h/2-arrowSize*5/2}, global.textColor, arrowSize)
+	global.ren.draw(">",
+		th.Vf2{
+			global.cam.w - global.ren.runeDims(int32('>')).x*5,
+			 global.cam.h/2-arrowSize*5/2}, global.textColor, arrowSize)*/
+}
+
+fn init*() {
+	global.menuScnId = scene.Scene{
+		name: "main menu",
+		reset: reset,
+		handle: handle,
+		draw: draw}.register()
+}

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./arcade-defense-data/tophat dir arcade-defense-data/

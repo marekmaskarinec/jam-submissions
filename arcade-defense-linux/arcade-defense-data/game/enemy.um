@@ -1,0 +1,141 @@
+
+import (
+	"th.um"
+	"std.um"
+	"ent.um"
+	"misc.um"
+	"rect.um"
+	"image.um"
+	"signal.um"
+
+	"../game.um"
+	"../../logger.um"
+	"../../global.um"
+	"../../effects.um"
+)
+
+const (
+	hitVisLen = 200
+)
+
+type Cfg* = struct {
+	img: image.Image
+	speed: th.fu
+	hp: int
+	reward: int
+}
+
+var (
+	trans: th.Transform = th.Transform{ s: th.Vf2{1, 1} }
+	cfgs: []Cfg
+)
+
+fn init*() {
+	cfgs = []Cfg{
+		Cfg{
+			img: image.load("gfx/enemies/enemy_1.png"),
+			speed: 0.05,
+			hp: 2,
+			reward: 1},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_2.png"),
+			speed: 0.05,
+			hp: 2,
+			reward: 1},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_3.png"),
+			speed: 0.02,
+			hp: 3,
+			reward: 2},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_4.png"),
+			speed: 0.02,
+			hp: 5,
+			reward: 2},
+		Cfg{
+			img: image.load("gfx/enemies/enemy_4.png"),
+			speed: 0.004,
+			hp: 8,
+			reward: 4}}
+}
+
+type Enemy* = struct {
+	e: ^ent.Ent
+	pos: th.fu
+	hp: int
+	speed: th.fu
+
+	reward: int
+	lastHit: int
+}
+
+fn (enm: ^Enemy) init(pos: th.Vf2) {
+	cfg := cfgs[std.rand()%len(cfgs)]
+
+	enm.e = new(ent.Ent)
+	enm.e^ = ent.mk(cfg.img, trans)
+	enm.e.t.p = pos
+	enm.e.t.o = th.Vf2{enm.e.r.w/2, enm.e.r.h/2}
+	enm.e.r = rect.mk(4, 3, 7, 9)
+
+	enm.speed = cfg.speed
+	enm.hp = cfg.hp
+	enm.reward = cfg.reward
+}
+
+fn (enm: ^Enemy) reset() {
+	enm.hp = 10
+}
+
+fn (enm: ^Enemy) handle() {
+	if trunc(enm.pos) + 1 >= len(game.env.path) {
+		enm.pos = 0
+		effects.hurtEffect()
+		signal.emit("path_finish", null)
+	}
+
+	p := trunc(enm.pos)
+	b := game.env.path[p]
+	e := game.env.path[p + 1]
+	enm.e.t.p = th.Vf2{
+		b.x + (e.x-b.x) * (enm.pos - p),
+		b.y + (e.y-b.y) * (enm.pos - p)}
+
+	enm.pos += enm.speed * th.delta / b.distanceTo(e)
+	enm.e.t.r = enm.e.t.p.angleTo(e) + 90
+}
+
+fn (enm: ^Enemy) draw() {
+	if th.time - enm.lastHit < hitVisLen && (th.time / 50) % 2 == 0 {
+		enm.e.c = 0xff2222aa
+	}
+
+	enm.e.draw(global.cam)
+	enm.e.c = th.white
+}
+
+fn (enm: ^Enemy) getEnt(): ^ent.Ent {
+	return enm.e
+}
+
+fn (enm: ^Enemy) damage(amount: int) {
+	enm.lastHit = th.time
+
+	enm.hp -= amount
+}
+
+fn (enm: ^Enemy) alive(): bool {
+	return enm.hp > 0
+}
+
+fn (enm: ^Enemy) die() {
+	for i:=0; i < enm.reward; i++ {
+		p := th.Vf2{
+			misc.stepify(enm.e.t.p.x, global.tileSize),
+			misc.stepify(enm.e.t.p.y, global.tileSize)}
+		p.x += std.rand() % (trunc(global.tileSize)-2) + 1
+		p.y += std.rand() % (trunc(global.tileSize)-2) + 1
+
+		game.spawnCoin(p)
+	}	
+}

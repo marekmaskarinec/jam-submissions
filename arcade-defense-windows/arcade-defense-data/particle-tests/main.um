@@ -1,0 +1,61 @@
+
+import (
+	"th.um"
+	"std.um"
+	"rect.um"
+	"input.um"
+	"canvas.um"
+	"window.um"
+	"particles.um"
+)
+
+fn mortarStart(e: particles.Emitter): particles.Emitter {
+	e.active = true
+
+	for i:=0; i < len(e.particles); i++ {
+		e.particles[i] = particles.Particle{
+			start_time: th.time + std.rand() % 300,
+			seed: std.rand()}
+	}
+
+	return e
+}
+
+fn main() {
+	window.setup("td particles", 192, 108)
+	cam := rect.mk(96, 54, 192, 108)
+
+	partc := 400
+
+	mortarExplosion := particles.Emitter{
+		pos: th.Vf2{20, 20},
+		dm: th.Vf2{4, 4},
+		gravity: th.Vf2{0.1, 0.1},
+
+		repeat: false,
+		active: true,
+
+		angle: th.Vf2{0, 360},
+
+		lifetime: 400,
+		lifetimeRandomness: 0.2,
+
+		velocity: 0.4,
+		velocityRandomness: 0.2,
+
+		size: 1,
+		sizeRandomness: 0.2,
+		maxSize: 2,
+
+		colors: []uint32{0x47cbf9ff, 0x38c5f5aa, 0x28aedc22},
+		particles: make([]particles.Particle, partc)}
+
+	for window.cycle(cam) {
+		canvas.drawRect(th.white, rect.mk(0, 0, cam.w, cam.h))
+
+		if input.isJustPressed(' ') {
+			mortarExplosion = mortarStart(mortarExplosion)
+		}
+		mortarExplosion.draw(cam, th.time)
+	}
+}

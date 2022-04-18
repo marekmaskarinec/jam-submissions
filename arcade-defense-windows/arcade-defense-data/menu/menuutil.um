@@ -1,0 +1,17 @@
+
+import (
+	"th.um"
+
+	"../global.um"
+)
+
+const blinkFreq* = 200
+
+fn textLen*(text: str, scale: th.fu): th.fu {
+	s := 0.0
+	for i:=0; i < len(text); i++ {
+		s += global.ren.runeDims(int32(text[i])).x * scale
+	}
+
+	return s
+}
