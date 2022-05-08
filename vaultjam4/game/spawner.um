@@ -15,6 +15,7 @@ var (
 
 fn reset*() {
 	score = 0
+	bossSpawned = false
 }
 
 fn init*() {

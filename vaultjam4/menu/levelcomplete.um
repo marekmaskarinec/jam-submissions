@@ -5,6 +5,7 @@ import (
 	"canvas.um"
 
 	"menuutil.um"
+	"../res.um"
 	"../scene.um"
 	"../global.um"
 	"../game/game.um"
@@ -19,11 +20,11 @@ fn handle*() {
 }
 
 fn draw*() {
-	global.drawBgTiles()
+	menuutil.drawBgTiles()
 
-	global.ren.draw("LEVEL PASSED", th.Vf2{4, 4}, global.textColor, 4.9)
+	res.ren.draw("LEVEL PASSED", th.Vf2{4, 4}, global.textColor, 4.9)
 	if (th.time/menuutil.blinkFreq)%2 == 0 {
-		global.ren.draw("ENTER",
+		res.ren.draw("ENTER",
 			th.Vf2{(global.cam.w-menuutil.textLen("ENTER", 4))/2,
 			60}, global.textColor, 4)
 	}

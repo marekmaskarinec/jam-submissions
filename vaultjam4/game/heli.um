@@ -1,0 +1,272 @@
+
+import (
+	"th.um"
+	"ent.um"
+	"lerp.um"
+	"misc.um"
+	"rect.um"
+	"atlas.um"
+	"image.um"
+	"input.um"
+	"canvas.um"
+
+	"hud.um"
+	"game.um"
+	"../res.um"
+	"../global.um"
+	"../animator.um"
+	"buildings/mortar.um"
+	"buildings/aimingturret.um"
+)
+
+const (
+	speed = 80
+
+	turretIdx* = 0
+	mortarIdx* = 1
+	flamethrower* = 2
+
+	menuBorder = 1
+
+	fps = 10
+	unfps = 2
+)
+
+var (
+	e: ^ent.Ent
+
+	atl: atlas.Atlas
+	anm: animator.Anim
+
+	xlerper: lerp.Lerper
+	ylerper: lerp.Lerper
+	effPos: th.Vf2
+
+	selection: int
+	menuPos: th.fu
+)
+
+fn getBarrelImg(): image.Image {
+	switch selection {
+	case turretIdx:
+		return res.turretImg
+	case mortarIdx:
+		return res.mortarImg
+	}
+	return image.Image{}
+}
+
+fn getPrice(): int {
+	switch selection {
+	case turretIdx:
+		return game.turretPrice
+	case mortarIdx:
+		return game.mortarPrice
+	}
+
+	return 0
+}
+
+fn getPlacePos(): th.Vf2 {
+	return th.Vf2{
+		misc.stepify(e.t.p.x, global.tileSize),
+		misc.stepify(e.t.p.y, global.tileSize)}
+}
+
+fn canPlace(): bool {
+	if getPrice() > game.money {
+		return false
+	}
+
+	p := getPlacePos()
+	if game.env.isPath(p) {
+		return false
+	}
+
+	for i:=0; i < len(game.bdgsScn); i++ {
+		bp := game.bdgsScn[i].t.p
+		if bp.x == p.x && bp.y == p.y {
+			return false
+		}	
+	}
+
+	return true
+}
+
+fn place() {
+	if !canPlace() {
+		return
+	}
+
+	var bdg: game.Building
+	switch selection {
+	case turretIdx:
+		bdg = new(aimingturret.AimingTurret)
+	case mortarIdx:
+		bdg = new(mortar.Mortar)
+	}
+
+	game.bdgsScn = append(game.bdgsScn, bdg.init(e.t.p))
+	game.bdgs = append(game.bdgs, bdg)
+
+	game.money -= getPrice()
+}
+
+fn reset*() {
+	xlerper = lerp.Lerper{}
+	ylerper = lerp.Lerper{}
+
+	selection = 0
+
+	e.t.p = th.Vf2{5 * global.tileSize, 3 * global.tileSize}
+	effPos = th.Vf2{5 * global.tileSize, 3 * global.tileSize}
+}
+
+fn init*() {
+	atl = atlas.mk(res.heliImg, th.Vf2{2, 1})
+
+	anm = animator.Anim{
+		atl: atl,
+		min: 0,
+		max: 2,
+		fps: 10}
+
+	e = new(ent.Ent)
+	e^ = ent.mk(res.heliImg, th.Transform{ s: th.Vf2{1, 1} })
+
+	menuPos = (global.cam.w - global.tileSize*3 - menuBorder*2) / 2
+}
+
+fn move*(p, ep: ^th.Vf2, xl, yl: ^lerp.Lerper, speed: int) {
+	mot := th.Vf2{}
+
+	if input.isJustPressed(input.key_up) {
+		mot.y -= 1
+	}
+
+	if input.isJustPressed(input.key_down) {
+		mot.y += 1
+	}
+
+	if input.isJustPressed(input.key_left) {
+		mot.x -= 1
+	}
+
+	if input.isJustPressed(input.key_right) {
+		mot.x += 1
+	}
+
+	if mot.x != 0 || mot.y != 0 {
+		xl^ = append(xl^, lerp.mk(ep.x, ep.x + mot.x * global.tileSize, speed, false))
+		yl^ = append(yl^, lerp.mk(ep.y, ep.y + mot.y * global.tileSize, speed, false))
+		ep.x += mot.x * global.tileSize
+		ep.y += mot.y * global.tileSize
+	}
+
+	if len(xl^) > 0 {
+		p.x = xl.byDelta(th.delta)
+	}
+
+	if len(yl^) > 0 {
+		p.y = yl.byDelta(th.delta)
+	}
+}
+
+fn handle*() {
+	for i:=0; i < len(game.coins); i++ {
+		p := game.coins[i].e.t.p
+
+		if p.x >= e.t.p.x && p.y >= e.t.p.y &&
+			p.x < e.t.p.x + global.tileSize &&
+			p.y < e.t.p.y + global.tileSize {
+			game.coins = delete(game.coins, i)
+
+			game.money++
+		}
+	}
+
+	move(&e.t.p, &effPos, &xlerper, &ylerper, speed)
+
+	for i:=0; i < 3; i++ {
+		if input.isJustPressed(char(int('1') + i)) {
+			selection = i
+		}
+	}
+
+	if input.isJustPressed(input.key_enter) {
+		place()
+	}
+}
+
+fn drawTurret() {
+	c := 0xffffffcc
+	if !canPlace() {
+		c = 0xff2222cc
+	}
+
+	res.turretBaseImg.draw(th.Transform{
+		p: getPlacePos(),
+		s: th.Vf2{ 1, 1 }}, c)
+	getBarrelImg().draw(th.Transform{
+		p: getPlacePos(),
+		s: th.Vf2{ 1, 1 }}, c)
+}
+
+fn getMenuItemColor(oldSel: int): uint32 {
+	c := 0xffffff00
+	if game.money < getPrice() {
+		c = 0xff222200
+	}
+
+	if selection == oldSel {
+		c += 0xff
+	} else {
+		c += 0xaa
+	}
+
+	return c
+}
+
+fn drawMenuItem(oldSel: int) {
+		p := th.Vf2{
+				menuPos + (global.tileSize + menuBorder)*selection,
+				global.cam.h - global.tileSize - menuBorder}
+
+		c := getMenuItemColor(oldSel)
+
+		img := getBarrelImg()
+		img.crop(th.Vf2{0, 0}, th.Vf2{1.0/(img.getDims().x/global.tileSize), 1})
+		img.draw(th.Transform{
+			p: p,
+			s: th.Vf2{1, 1}}, c)
+
+		const labelSize = 4
+		res.ren.draw(repr(selection+1), th.Vf2{
+			p.x + global.tileSize - labelSize, p.y + global.tileSize - labelSize},
+			th.black, 1.0/5*labelSize)
+
+		hud.coinImg.draw(th.Transform{
+			s: th.Vf2{labelSize, labelSize}.div(hud.coinImg.getDims()),
+			p: th.Vf2{p.x, p.y + global.tileSize - labelSize}}, c)
+		res.ren.draw(repr(getPrice()),
+			th.Vf2{p.x + labelSize, p.y + global.tileSize - labelSize},
+			th.black, 0.2*labelSize)
+}
+
+fn drawMenu() {
+	oldSel := selection
+	selection = 0
+	for i:=0;selection < 2; selection++ {
+		drawMenuItem(oldSel)
+	}
+	selection = oldSel
+}
+
+fn draw*() {
+	drawTurret()
+
+	anm.animate(th.time)
+	e.draw(global.cam)
+
+	drawMenu()
+}

@@ -5,26 +5,20 @@ import (
 	"hud.um"
 	"boss.um"
 	"game.um"
+	"heli.um"
 	"enemy.um"
-	"gproj.um"
 	"spawner.um"
 	"../scene.um"
 	"../global.um"
 	"../effects.um"
 	"buildings/mortar.um"
 	"buildings/aimingturret.um"
-	"characters/bomber.um"
-	"characters/builder.um"
-	"characters/collector.um"
 )
 
 fn reset*() {
 	hud.reset()
 	game.reset()
-
-	bomber.reset()
-	builder.reset()
-	collector.reset()
+	heli.reset()
 
 	spawner.reset()
 	effects.reset()
@@ -33,10 +27,7 @@ fn reset*() {
 fn handle*() {
 	hud.handle()
 	game.handle()
-
-	bomber.handle()
-	builder.handle()
-	collector.handle()
+	heli.handle()
 
 	effects.handle()
 	spawner.handle()
@@ -45,10 +36,7 @@ fn handle*() {
 fn draw*() {
 	game.draw()
 	effects.draw()
-
-	bomber.draw()
-	builder.draw()
-	collector.draw()
+	heli.draw()
 
 	spawner.draw()
 	hud.draw()
@@ -57,18 +45,14 @@ fn draw*() {
 fn init*() {
 	hud.init()
 	game.init()
+	heli.init()
 
-	gproj.init()
 	mortar.init()
 	aimingturret.init()
 
 	boss.init()
 	enemy.init()
 	spawner.init()
-
-	bomber.init()
-	builder.init()
-	collector.init()
 
 	game.loadLevel(0)
 

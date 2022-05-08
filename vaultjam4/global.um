@@ -14,44 +14,11 @@ const (
 
 var (
 	cam*: rect.Rect
-	ren*: ui.TextRenderer
-	boldRen*: ui.TextRenderer
 
 	menuScnId*: int
 	gameScnId*: int
 	gameOverScnId*: int
 	levelCompleteScnId*: int
-
-	turretBaseImg*: image.Image
-	mortarImg*: image.Image
-	turretImg*: image.Image
-	borderImg*: image.Image
-	gameBorderImg*: image.Image
-	buttonImg*: image.Image
-	bgTileImg*: image.Image
 )
 
-fn init*() {
-	ren = font.mkCached(font.load("kpfont6/reg.ttf"), 32)
-	boldRen = ui.PixelFont{}
-	turretBaseImg = image.load("gfx/buildings/turret-base.png")
-	mortarImg = image.load("gfx/buildings/mortar.png")
-	turretImg = image.load("gfx/buildings/aiming-turret-barrel.png")
-	borderImg = image.load("gfx/border.png")
-	gameBorderImg = image.load("gfx/game-border.png")
-	bgTileImg = image.load("gfx/bgtile.png")
-}
-
-fn drawBgTiles*() {
-	const scale = 1 * global.tileSize
-
-	for x:=0; x < global.cam.w/scale; x++ {
-		for y:=0; y < global.cam.h/scale; y++ {
-			bgTileImg.draw(
-				th.Transform{
-					p: th.Vf2{x * scale + 2, y * scale + 2},
-					s: th.Vf2{scale / global.tileSize, scale / global.tileSize}},
-				0xffffff99)
-		}
-	}
-}
+fn init*() { }

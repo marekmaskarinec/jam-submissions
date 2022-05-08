@@ -7,7 +7,7 @@ import (
 	"image.um"
 
 	"../game.um"
-	"../gproj.um"
+	"../../res.um"
 	"../../global.um"
 	"../../logger.um"
 	"../../animator.um"
@@ -17,6 +17,7 @@ const (
 	maxAmmo = 20
 	fireInterval = 800
 	barrelLength = 5
+	projSpeed = 0.2
 )
 
 var (
@@ -25,13 +26,81 @@ var (
 )
 
 fn init*() {
-	barrelAtl = atlas.mk(global.turretImg, th.Vf2{3, 1})
+	barrelAtl = atlas.mk(res.turretImg, th.Vf2{3, 1})
+}
+
+type Proj* = struct {
+	target: ^game.Enemy
+	e: ^ent.Ent
+	startPos: th.Vf2
+	motion: th.Vf2
+	spawnTime: int
+}
+
+fn mkProj*(pos: th.Vf2, target: ^game.Enemy): Proj {
+	gpr := Proj{}
+	gpr.target = target
+	gpr.e = new(ent.Ent)
+	gpr.e^ = ent.mk(res.turretProjImg, trans)
+	gpr.e.r = rect.mk(0, 0, 3, 3)
+	gpr.e.t.p = pos
+	
+	gpr.startPos = pos
+	gpr.spawnTime = th.time
+
+	tpos := target.getEnt().t.p.add(th.Vf2{target.getEnt().r.w/2, target.getEnt().r.h/2})
+
+	return gpr
+}
+
+fn (gpr: ^Proj) handle*(): bool {
+	tent := gpr.target.getEnt()
+	tpos := tent.t.p.add(th.Vf2{tent.r.w/2, tent.r.h/2})
+	dist := tpos.distanceTo(gpr.e.t.p)
+	if dist == 0 {
+		return false
+	}
+
+	agl := gpr.e.t.p.angleTo(tpos)
+	gpr.e.t.r = agl
+
+	gpr.motion = tpos.sub(gpr.e.t.p).
+		div(th.Vf2{dist, dist})
+
+	const detail = 10
+	scn := []^ent.Ent{tent}
+	mot := th.Vf2{
+		gpr.motion.x * th.delta * projSpeed/detail,
+		gpr.motion.y * th.delta * projSpeed/detail}
+	for i:=0; i < detail; i++ {
+		gpr.e.t.p.x += mot.x
+		gpr.e.t.p.y += mot.y
+  
+		if len(gpr.e.getColl(scn, 1)) > 0 || gpr.e.t.p.distanceTo(tent.t.p) < 0.5 * global.tileSize {
+			gpr.target.damage(1) // TODO: setable damage
+			return true
+		}
+	}
+
+	if gpr.e.t.p.distanceTo(gpr.startPos) > global.cam.w {
+		return true
+	}
+
+	if th.time - gpr.spawnTime >= 4000 {
+		return true
+	}
+
+	return false
+}
+
+fn (gpr: ^Proj) draw*() {
+	gpr.e.draw(global.cam)
 }
 
 type AimingTurret* = struct {
 	e: ^ent.Ent
 	tgt: ^game.Enemy
-	projectiles: []gproj.Gproj
+	projectiles: []Proj
 	agl: th.fu
 
 	lastFire: int
@@ -42,12 +111,12 @@ type AimingTurret* = struct {
 
 fn (atr: ^AimingTurret) init*(pos: th.Vf2): ^ent.Ent {
 	atr.e = new(ent.Ent)
-	atr.e^ = ent.mk(global.turretBaseImg, trans)
+	atr.e^ = ent.mk(res.turretBaseImg, trans)
 	atr.e.c = th.white
 	atr.e.t.p = pos
 
 	atr.fireInterval = fireInterval
-	atr.projectiles = []gproj.Gproj{}
+	atr.projectiles = []Proj{}
 
 	atr.anm = animator.Anim{
 		atl: barrelAtl,
@@ -72,7 +141,7 @@ fn (atr: ^AimingTurret) barrelHeadPos(): th.Vf2 {
 }
 
 fn (atr: ^AimingTurret) shoot*() {
-	atr.projectiles = append(atr.projectiles, gproj.mk(atr.barrelHeadPos(), atr.tgt))
+	atr.projectiles = append(atr.projectiles, mkProj(atr.barrelHeadPos(), atr.tgt))
 	atr.lastFire = th.time
 
 	atr.anm.max = 3
@@ -133,7 +202,7 @@ fn (atr: ^AimingTurret) draw*() {
 	atr.e.draw(global.cam)
 
 	atr.anm.animate(th.time)
-	global.turretImg.draw(th.Transform{
+	res.turretImg.draw(th.Transform{
 		p: global.cam.toScreen(atr.e.t.p),
 		s: th.Vf2{ 1, 1 },
 		o: th.Vf2{ atr.e.r.w/2, atr.e.r.h/2 },

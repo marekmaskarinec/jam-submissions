@@ -1,0 +1,35 @@
+
+import (
+	"ui.um"
+	"font.um"
+	"image.um"
+)
+
+var (
+	ren*: ui.TextRenderer
+	boldRen*: ui.TextRenderer
+
+	turretBaseImg*: image.Image
+	mortarImg*: image.Image
+	turretImg*: image.Image
+	borderImg*: image.Image
+	gameBorderImg*: image.Image
+	buttonImg*: image.Image
+	bgTileImg*: image.Image
+	turretProjImg*: image.Image
+	heliImg*: image.Image
+)
+
+fn init*() {
+	turretBaseImg = image.load("gfx/buildings/turret-base.png")
+	mortarImg = image.load("gfx/buildings/mortar.png")
+	turretImg = image.load("gfx/buildings/aiming-turret-barrel.png")
+	borderImg = image.load("gfx/border.png")
+	gameBorderImg = image.load("gfx/game-border.png")
+	bgTileImg = image.load("gfx/bgtile.png")
+	turretProjImg = image.load("gfx/buildings/turret-projectile.png")
+	heliImg = image.load("gfx/heli.png")
+
+	ren = font.mkCached(font.load("kpfont6/reg.ttf"), 32)
+	boldRen = ren
+}

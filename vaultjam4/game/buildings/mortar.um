@@ -8,6 +8,7 @@ import (
 	"particles.um"
 
 	"../game.um"
+	"../../res.um"
 	"../../global.um"
 	"../../effects.um"
 	"../../animator.um"
@@ -29,7 +30,7 @@ var (
 )
 
 fn init*() {
-	barrelAtl = atlas.mk(global.mortarImg, th.Vf2{3, 1})
+	barrelAtl = atlas.mk(res.mortarImg, th.Vf2{3, 1})
 
 	projectileImg = image.load("gfx/buildings/mortar-projectile.png")
 }
@@ -132,7 +133,7 @@ type Mortar* = struct {
 
 fn (mtr: ^Mortar) init(pos: th.Vf2): ^ent.Ent {
 	mtr.e = new(ent.Ent)
-	mtr.e^ = ent.mk(global.turretBaseImg, trans)
+	mtr.e^ = ent.mk(res.turretBaseImg, trans)
 	mtr.e.t.p = pos
 
 	mtr.fireInterval = fireInterval
@@ -184,7 +185,7 @@ fn (mtr: ^Mortar) draw*() {
 	mtr.e.draw(global.cam)
 	
 	mtr.anm.animate(th.time)
-	global.mortarImg.draw(th.Transform{
+	res.mortarImg.draw(th.Transform{
 		s: th.Vf2{ 1, 1 },
 		p: global.cam.toScreen(mtr.e.t.p)})
 }

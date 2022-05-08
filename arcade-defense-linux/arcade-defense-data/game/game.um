@@ -197,6 +197,10 @@ fn reset*() {
 
 	health = 9
 	money = 100
+	killCount = 0
+	bossActive = false
+	character = charBuilder
+	coins = []Coin{}
 }
 
 fn handle*() {

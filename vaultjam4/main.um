@@ -6,6 +6,7 @@ import (
 	"canvas.um"
 	"window.um"
 
+	"res.um"
 	"scene.um"
 	"logger.um"
 	"global.um"
@@ -21,6 +22,7 @@ fn main() {
 	window.setup("td game", 192, 108)
 	global.cam = rect.mk(96, 54, 192, 108)
 
+	res.init()
 	levels.init()
 	global.init()
 	scene.init()
@@ -45,7 +47,7 @@ fn main() {
 		scene.draw()
 
 		if scene.curr != global.gameScnId {
-			global.borderImg.draw(th.Transform{ s: th.Vf2{1, 1} })
+			res.borderImg.draw(th.Transform{ s: th.Vf2{1, 1} })
 		}
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"canvas.um"
 
 	"menuutil.um"
+	"../res.um"
 	"../scene.um"
 	"../global.um"
 	"../game/game.um"
@@ -38,7 +39,7 @@ fn handle*() {
 }
 
 fn draw*() {
-	global.drawBgTiles()
+	menuutil.drawBgTiles()
 
 	lvl := levels.getLevel(selection)
 	img := lvl.img
@@ -58,12 +59,12 @@ fn draw*() {
 
 	const texts = 0.2*margin*0.8
 
-	global.ren.draw(lvl.name,
+	res.ren.draw(lvl.name,
 		th.Vf2{margin, 4},
 		global.textColor, texts)
 
 	if (th.time/menuutil.blinkFreq)%2 == 0 {
-		global.ren.draw("ENTER", th.Vf2{global.cam.w-2 - menuutil.textLen("ENTER", texts), 4}, global.textColor, texts)
+		res.ren.draw("ENTER", th.Vf2{global.cam.w-2 - menuutil.textLen("ENTER", texts), 4}, global.textColor, texts)
 	}
 
 	y := th.fu(margin) + 1
@@ -73,7 +74,7 @@ fn draw*() {
 			c -= 0x44
 		}
 
-		global.ren.draw(std.itoa(i+1) + ".", th.Vf2{4, y}, c, texts)
+		res.ren.draw(std.itoa(i+1) + ".", th.Vf2{4, y}, c, texts)
 		y += texts * 5
 	}
 

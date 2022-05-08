@@ -7,6 +7,7 @@ import (
 	"canvas.um"
 	
 	"game.um"
+	"../res.um"
 	"../global.um"
 	"../menu/menuutil.um"
 )
@@ -33,7 +34,7 @@ fn reset*() { }
 fn handle*() { }
 
 fn draw*() {
-	global.gameBorderImg.draw(th.Transform{s: th.Vf2{1, 1}})
+	res.gameBorderImg.draw(th.Transform{s: th.Vf2{1, 1}})
 
 	s := th.Vf2{3.5, 3.5}.div(healthImg.getDims())
 	for i:=0; i < game.health; i++ {
@@ -48,12 +49,12 @@ fn draw*() {
 		p: th.Vf2{global.tileSize * 2 + 2, -1}})
 	const coinLabelSize = 0.2*5
 	w := menuutil.textLen(std.itoa(game.money), coinLabelSize)
-	global.ren.draw(std.itoa(game.money),
+	res.ren.draw(std.itoa(game.money),
 		th.Vf2{global.tileSize * 2 + 2 + (coinImg.getDims().x-w)/2, 4.5},
 		0x9f7d06ff, 0.2*5)
 
 	if !game.bossActive {
-		global.ren.draw(std.itoa(
+		res.ren.draw(std.itoa(
 			game.killCount) + "/" + std.itoa(game.targetKills),
 			th.Vf2{2 + 15 + 30 + 15 + 30, 2}, th.black, 0.2*15)
 	}
